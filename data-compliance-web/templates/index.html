@@ -4,29 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据合规智能审查系统</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+                        'display': ['Playfair Display', 'serif'],
+                        'body': ['Noto Serif SC', 'serif'],
                     },
                     colors: {
-                        primary: {
-                            50: '#f0f4ff',
-                            100: '#e0eaff',
-                            500: '#3b66f5',
-                            600: '#2549d1',
-                            700: '#1a37ab',
-                            900: '#0f1f5e',
+                        'editorial': {
+                            50: '#faf9f7',
+                            100: '#f2f0ec',
+                            200: '#e8e4dd',
+                            300: '#d4cfc4',
+                            400: '#b8b0a0',
+                            500: '#9a8f7a',
+                            600: '#7d715f',
+                            700: '#635a4d',
+                            800: '#524b41',
+                            900: '#463f38',
                         },
-                        risk: {
-                            high: '#ef4444',
-                            medium: '#6366f1',
-                            low: '#3b82f6',
-                            none: '#22c55e',
+                        'accent': {
+                            gold: '#c9a962',
+                            deep: '#8b7355',
+                            rust: '#a0522d',
+                        },
+                        'risk': {
+                            high: '#a94442',
+                            medium: '#635a4d',
+                            low: '#5a6b8c',
+                            none: '#5e7d5e',
                         }
                     }
                 }
@@ -34,276 +46,362 @@
         }
     </script>
     <style>
-        body { background: #f6f7fb; }
-        .glass-card {
-            background: rgba(255,255,255,0.98);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(226,232,240,0.8);
+        body {
+            background: linear-gradient(135deg, #faf9f7 0%, #f2f0ec 50%, #e8e4dd 100%);
+            min-height: 100vh;
         }
-        .upload-zone {
-            border: 2px dashed #cbd5e1;
-            background: #f8fafc;
-            transition: all 0.2s ease;
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 60px, rgba(201, 169, 98, 0.03) 60px, rgba(201, 169, 98, 0.03) 61px);
+            pointer-events: none;
+            z-index: -1;
         }
-        .upload-zone:hover, .upload-zone.drag-active {
-            border-color: #3b66f5;
-            background: #f0f4ff;
+        .grain-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+        .deco-line {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #c9a962, transparent);
+        }
+        .deco-corner {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 1px solid #c9a962;
+        }
+        .deco-corner-tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+        .deco-corner-tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+        .deco-corner-bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+        .deco-corner-br { bottom: 0; right: 0; border-left: none; border-top: none; }
+        .editorial-input {
+            border: 1px solid #d4cfc4;
+            background: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .editorial-input:focus {
+            border-color: #c9a962;
+            box-shadow: 0 0 0 3px rgba(201, 169, 98, 0.1);
+            outline: none;
+        }
+        .drag-zone {
+            border: 2px dashed #d4cfc4;
+            background: linear-gradient(145deg, #ffffff 0%, #faf9f7 100%);
+            transition: all 0.3s ease;
+        }
+        .drag-zone:hover, .drag-zone.drag-active {
+            border-color: #c9a962;
+            background: #f2f0ec;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #3b66f5 0%, #2549d1 100%);
-            transition: all 0.2s ease;
+            background: linear-gradient(135deg, #635a4d 0%, #463f38 100%);
+            transition: all 0.3s ease;
         }
         .btn-primary:hover {
             transform: translateY(-1px);
-            box-shadow: 0 8px 20px -4px rgba(59,102,245,0.35);
+            box-shadow: 0 10px 25px -8px rgba(99, 90, 77, 0.4);
         }
         .progress-fill {
-            background: linear-gradient(90deg, #3b66f5, #60a5fa);
+            background: linear-gradient(90deg, #c9a962, #8b7355);
             transition: width 0.4s ease;
         }
     </style>
 </head>
-<body class="font-sans text-slate-800 min-h-screen flex flex-col">
+<body class="font-body text-editorial-800">
+    <div class="grain-overlay"></div>
 
-<nav class="bg-white border-b border-slate-200 sticky top-0 z-40">
-    <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-sm">D</div>
-            <span class="font-semibold text-slate-900">数据合规审查</span>
-        </div>
-        <div class="text-xs text-slate-500">让法务与合规工作更高效</div>
-    </div>
-</nav>
-
-<main class="flex-1 flex items-center justify-center px-6 py-10">
-    <div class="w-full max-w-2xl">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-900 mb-2">智能合规审查</h1>
-            <p class="text-slate-500">上传隐私政策或数据处理协议，自动识别合规风险</p>
-        </div>
-
-        <div class="glass-card rounded-2xl shadow-sm p-8">
-            <div class="mb-5">
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">文档名称</label>
-                <input type="text" id="documentName" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors" placeholder="例如：某App隐私政策 V1.0">
-            </div>
-
-            <div id="dropZone" class="upload-zone rounded-xl p-10 text-center cursor-pointer mb-5">
-                <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                </div>
-                <p class="text-slate-700 font-medium text-sm mb-0.5">
-                    <span class="text-primary-600">点击选择文件</span> 或拖拽到此处
-                </p>
-                <p class="text-xs text-slate-400">支持 .txt, .md, .doc, .docx, .pdf</p>
-                <input type="file" id="fileInput" class="hidden" accept=".txt,.md,.doc,.docx,.pdf">
-            </div>
-
-            <div id="selectedFile" class="hidden mb-5 bg-slate-50 border border-slate-200 rounded-lg p-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+    <header class="relative">
+        <div class="max-w-5xl mx-auto px-6 py-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 border border-accent-gold flex items-center justify-center">
+                        <svg class="w-5 h-5 text-editorial-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
                     </div>
                     <div>
-                        <p id="fileName" class="text-sm font-medium text-slate-800"></p>
-                        <p id="fileSize" class="text-xs text-slate-500"></p>
+                        <h1 class="font-display text-xl font-semibold text-editorial-900 tracking-tight">数据合规审查</h1>
+                        <p class="text-sm text-editorial-500 mt-0.5">Data Compliance Review System</p>
                     </div>
                 </div>
-                <button id="removeFile" class="text-slate-400 hover:text-slate-700 p-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <div class="hidden md:block">
+                    <span class="text-xs text-editorial-400 tracking-widest uppercase">Privacy Policy & Terms</span>
+                </div>
+            </div>
+        </div>
+        <div class="deco-line"></div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-10">
+        <div class="text-center mb-10">
+            <h2 class="font-display text-4xl md:text-5xl font-semibold text-editorial-900 mb-3">智能合规审查</h2>
+            <p class="text-editorial-500 text-lg max-w-2xl mx-auto leading-relaxed">上传隐私政策或数据处理协议，自动识别合规风险</p>
+        </div>
+
+        <div class="relative bg-white shadow-xl shadow-editorial-200/50" style="border-radius: 0;">
+            <div class="deco-corner deco-corner-tl"></div>
+            <div class="deco-corner deco-corner-tr"></div>
+            <div class="deco-corner deco-corner-bl"></div>
+            <div class="deco-corner deco-corner-br"></div>
+
+            <div class="p-8 md:p-12">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-editorial-700 mb-2 tracking-wide">文档名称 <span class="text-accent-rust">*</span></label>
+                    <input type="text" id="documentName" class="editorial-input w-full px-5 py-3.5 text-editorial-800 placeholder-editorial-300" placeholder="例如：某App隐私政策 V1.0" required>
+                </div>
+
+                <div id="dropZone" class="drag-zone p-10 md:p-14 text-center cursor-pointer mb-6 relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="w-14 h-14 mx-auto mb-4 border border-accent-gold/40 rounded-full flex items-center justify-center">
+                            <svg class="w-7 h-7 text-accent-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                        </div>
+                        <p class="text-editorial-700 text-base mb-1">
+                            <span class="font-medium text-accent-deep border-b border-accent-gold/50 pb-0.5">点击选择文件</span>
+                            <span class="text-editorial-400">或拖拽到此处</span>
+                        </p>
+                        <p class="text-sm text-editorial-400">支持 .txt, .md, .doc, .docx, .pdf</p>
+                    </div>
+                    <input type="file" id="fileInput" class="hidden" accept=".txt,.md,.doc,.docx,.pdf">
+                </div>
+
+                <div id="selectedFile" class="hidden mb-6 p-4 bg-editorial-50 border border-accent-gold/20">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 bg-editorial-200 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-editorial-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p id="fileName" class="font-medium text-editorial-800 text-sm"></p>
+                                <p id="fileSize" class="text-xs text-editorial-400"></p>
+                            </div>
+                        </div>
+                        <button id="removeFile" class="text-editorial-400 hover:text-accent-rust transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex items-center space-x-4 mb-3">
+                        <div class="h-px flex-1 bg-editorial-200"></div>
+                        <span class="text-sm text-editorial-400 tracking-wider uppercase">或直接粘贴文本</span>
+                        <div class="h-px flex-1 bg-editorial-200"></div>
+                    </div>
+                    <textarea id="textInput" rows="4" class="editorial-input w-full px-5 py-3.5 resize-none text-editorial-800 placeholder-editorial-300 text-sm" placeholder="在此粘贴隐私政策或数据处理协议文本..."></textarea>
+                </div>
+
+                <button id="startBtn" class="btn-primary w-full text-white font-medium py-4 px-8 tracking-wide flex items-center justify-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                    </svg>
+                    <span>开始审查</span>
                 </button>
             </div>
-
-            <div class="mb-5">
-                <div class="flex items-center gap-3 text-xs text-slate-400 mb-2">
-                    <div class="h-px flex-1 bg-slate-200"></div>
-                    <span>或直接粘贴文本</span>
-                    <div class="h-px flex-1 bg-slate-200"></div>
-                </div>
-                <textarea id="textInput" rows="4" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors resize-none text-sm" placeholder="在此粘贴隐私政策或数据处理协议文本..."></textarea>
-            </div>
-
-            <button id="startBtn" class="btn-primary w-full text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                <span>开始审查</span>
-            </button>
         </div>
 
-        <div class="grid grid-cols-3 gap-4 mt-6 text-center">
-            <div class="bg-white rounded-xl border border-slate-200 p-4">
-                <div class="w-8 h-8 mx-auto mb-2 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="mt-12 grid md:grid-cols-3 gap-6 text-center">
+            <div class="bg-white/60 border border-editorial-200 p-5">
+                <div class="w-10 h-10 mx-auto mb-3 border border-accent-gold/30 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-accent-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
                 </div>
-                <p class="text-xs font-medium text-slate-700">法规对照</p>
-                <p class="text-[11px] text-slate-500 mt-0.5">自动映射个保法/GDPR</p>
+                <h3 class="font-display text-base font-semibold text-editorial-800 mb-1">法规对照</h3>
+                <p class="text-sm text-editorial-500">自动映射个保法/GDPR</p>
             </div>
-            <div class="bg-white rounded-xl border border-slate-200 p-4">
-                <div class="w-8 h-8 mx-auto mb-2 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <div class="bg-white/60 border border-editorial-200 p-5">
+                <div class="w-10 h-10 mx-auto mb-3 border border-editorial-300 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-editorial-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
                 </div>
-                <p class="text-xs font-medium text-slate-700">风险识别</p>
-                <p class="text-[11px] text-slate-500 mt-0.5">10 条审查路径全覆盖</p>
+                <h3 class="font-display text-base font-semibold text-editorial-800 mb-1">风险识别</h3>
+                <p class="text-sm text-editorial-500">10 条审查路径全覆盖</p>
             </div>
-            <div class="bg-white rounded-xl border border-slate-200 p-4">
-                <div class="w-8 h-8 mx-auto mb-2 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <div class="bg-white/60 border border-editorial-200 p-5">
+                <div class="w-10 h-10 mx-auto mb-3 border border-accent-gold/30 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-accent-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
                 </div>
-                <p class="text-xs font-medium text-slate-700">整改建议</p>
-                <p class="text-[11px] text-slate-500 mt-0.5">生成 P1/P2/P3 任务清单</p>
+                <h3 class="font-display text-base font-semibold text-editorial-800 mb-1">整改建议</h3>
+                <p class="text-sm text-editorial-500">生成可执行任务清单</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="max-w-5xl mx-auto px-6 py-8 text-center">
+        <div class="deco-line mb-6"></div>
+        <p class="text-sm text-editorial-400">数据合规智能审查系统 · 辅助决策，不替代专业法律判断</p>
+    </footer>
+
+    <!-- Modals -->
+    <div id="progressModal" class="hidden fixed inset-0 bg-editorial-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white shadow-2xl p-10 max-w-md w-full mx-4 relative">
+            <div class="deco-corner deco-corner-tl"></div>
+            <div class="deco-corner deco-corner-tr"></div>
+            <div class="deco-corner deco-corner-bl"></div>
+            <div class="deco-corner deco-corner-br"></div>
+            <div class="text-center mb-8">
+                <div class="w-14 h-14 mx-auto mb-4 border border-accent-gold/30 flex items-center justify-center">
+                    <svg class="w-7 h-7 text-accent-gold animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <h3 class="font-display text-xl font-semibold text-editorial-900">正在审查中</h3>
+                <p id="progressMessage" class="text-editorial-500 mt-2">准备开始</p>
+            </div>
+            <div class="mb-6">
+                <div class="flex justify-between text-sm text-editorial-600 mb-2">
+                    <span>进度</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="w-full bg-editorial-100 h-1">
+                    <div id="progressBar" class="progress-fill h-1" style="width: 0%"></div>
+                </div>
             </div>
         </div>
     </div>
-</main>
 
-<!-- Progress Modal -->
-<div id="progressModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full mx-4">
-        <div class="text-center mb-6">
-            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-primary-50 flex items-center justify-center">
-                <svg class="w-6 h-6 text-primary-600 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+    <div id="errorModal" class="hidden fixed inset-0 bg-editorial-900/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white shadow-2xl p-8 max-w-sm w-full mx-4 relative">
+            <div class="deco-corner deco-corner-tl"></div>
+            <div class="deco-corner deco-corner-tr"></div>
+            <div class="deco-corner deco-corner-bl"></div>
+            <div class="deco-corner deco-corner-br"></div>
+            <div class="text-center">
+                <div class="w-12 h-12 mx-auto mb-4 border border-red-300 flex items-center justify-center text-red-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+                <h3 class="font-display text-lg font-semibold text-editorial-900 mb-2">出错了</h3>
+                <p id="errorMessage" class="text-editorial-500 mb-6"></p>
+                <button id="closeError" class="w-full py-3 border border-editorial-300 text-editorial-700 hover:bg-editorial-50 transition-colors text-sm">关闭</button>
             </div>
-            <h3 class="font-semibold text-slate-900">正在审查中</h3>
-            <p id="progressMessage" class="text-sm text-slate-500 mt-1">准备开始</p>
-        </div>
-        <div class="mb-2">
-            <div class="flex justify-between text-xs text-slate-600 mb-1">
-                <span>进度</span>
-                <span id="progressPercent">0%</span>
-            </div>
-            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                <div id="progressBar" class="progress-fill h-2 rounded-full" style="width: 0%"></div>
-            </div>
-        </div>
-        <div id="checkpoints" class="space-y-1 max-h-36 overflow-y-auto text-xs text-slate-500 mt-3"></div>
-    </div>
-</div>
-
-<!-- Error Modal -->
-<div id="errorModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
-        <div class="text-center">
-            <div class="w-10 h-10 mx-auto mb-3 rounded-full bg-red-50 flex items-center justify-center text-red-500">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </div>
-            <h3 class="font-semibold text-slate-900 mb-1">出错了</h3>
-            <p id="errorMessage" class="text-sm text-slate-500 mb-5"></p>
-            <button id="closeError" class="w-full py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-medium">关闭</button>
         </div>
     </div>
-</div>
 
-<script>
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-const selectedFile = document.getElementById('selectedFile');
-const fileName = document.getElementById('fileName');
-const fileSize = document.getElementById('fileSize');
-const removeFile = document.getElementById('removeFile');
-const textInput = document.getElementById('textInput');
-const documentName = document.getElementById('documentName');
-const startBtn = document.getElementById('startBtn');
-const progressModal = document.getElementById('progressModal');
-const progressMessage = document.getElementById('progressMessage');
-const progressBar = document.getElementById('progressBar');
-const progressPercent = document.getElementById('progressPercent');
-const checkpoints = document.getElementById('checkpoints');
-const errorModal = document.getElementById('errorModal');
-const errorMessage = document.getElementById('errorMessage');
-const closeError = document.getElementById('closeError');
+    <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const selectedFile = document.getElementById('selectedFile');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const removeFile = document.getElementById('removeFile');
+    const textInput = document.getElementById('textInput');
+    const documentName = document.getElementById('documentName');
+    const startBtn = document.getElementById('startBtn');
+    const progressModal = document.getElementById('progressModal');
+    const progressMessage = document.getElementById('progressMessage');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    const errorModal = document.getElementById('errorModal');
+    const errorMessage = document.getElementById('errorMessage');
+    const closeError = document.getElementById('closeError');
 
-let currentFile = null;
+    let currentFile = null;
 
-dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
-dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-active'); if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]); });
-fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFileSelect(e.target.files[0]); });
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-active'); if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFileSelect(e.target.files[0]); });
 
-function handleFileSelect(file) {
-    currentFile = file;
-    fileName.textContent = file.name;
-    fileSize.textContent = formatFileSize(file.size);
-    selectedFile.classList.remove('hidden');
-    textInput.value = '';
-}
-
-removeFile.addEventListener('click', () => {
-    currentFile = null;
-    fileInput.value = '';
-    selectedFile.classList.add('hidden');
-});
-
-textInput.addEventListener('input', () => {
-    if (textInput.value.trim()) { currentFile = null; selectedFile.classList.add('hidden'); }
-});
-
-function formatFileSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-}
-
-startBtn.addEventListener('click', async () => {
-    const name = documentName.value.trim();
-    if (!name) { showError('请输入文档名称'); return; }
-    const text = textInput.value.trim();
-    if (!currentFile && !text) { showError('请上传文件或输入文本'); return; }
-
-    const formData = new FormData();
-    formData.append('document_name', name);
-    if (currentFile) formData.append('file', currentFile);
-    else formData.append('input_text', text);
-
-    try {
-        progressModal.classList.remove('hidden');
-        updateProgress(0, '准备开始...');
-        const response = await fetch('/api/upload', { method: 'POST', body: formData });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || '上传失败');
-        connectToProgress(result.task_id);
-    } catch (err) {
-        progressModal.classList.add('hidden');
-        showError(err.message);
+    function handleFileSelect(file) {
+        currentFile = file;
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        selectedFile.classList.remove('hidden');
+        textInput.value = '';
     }
-});
 
-function connectToProgress(taskId) {
-    const evtSource = new EventSource(`/api/progress/${taskId}`);
-    evtSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.error) { evtSource.close(); progressModal.classList.add('hidden'); showError(data.error); return; }
-        const progress = data.progress || {};
-        const step = progress.step || 0;
-        const total = progress.total_steps || 11;
-        updateProgress(Math.round((step / total) * 100), progress.message || '处理中...');
-        if (data.status === 'completed') {
-            evtSource.close();
-            setTimeout(() => { window.location.href = `/result/${taskId}`; }, 400);
-        } else if (data.status === 'failed') {
-            evtSource.close();
+    removeFile.addEventListener('click', () => {
+        currentFile = null;
+        fileInput.value = '';
+        selectedFile.classList.add('hidden');
+    });
+
+    textInput.addEventListener('input', () => {
+        if (textInput.value.trim()) { currentFile = null; selectedFile.classList.add('hidden'); }
+    });
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    startBtn.addEventListener('click', async () => {
+        const name = documentName.value.trim();
+        if (!name) { showError('请输入文档名称'); return; }
+        const text = textInput.value.trim();
+        if (!currentFile && !text) { showError('请上传文件或输入文本'); return; }
+
+        const formData = new FormData();
+        formData.append('document_name', name);
+        if (currentFile) formData.append('file', currentFile);
+        else formData.append('input_text', text);
+
+        try {
+            progressModal.classList.remove('hidden');
+            updateProgress(0, '准备开始...');
+            const response = await fetch('/api/upload', { method: 'POST', body: formData });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || '上传失败');
+            connectToProgress(result.task_id);
+        } catch (err) {
             progressModal.classList.add('hidden');
-            showError(progress.message || '审查失败');
+            showError(err.message);
         }
-    };
-    evtSource.onerror = () => { evtSource.close(); };
-}
+    });
 
-function updateProgress(percent, message) {
-    progressBar.style.width = percent + '%';
-    progressPercent.textContent = percent + '%';
-    progressMessage.textContent = message;
-}
+    function connectToProgress(taskId) {
+        const evtSource = new EventSource(`/api/progress/${taskId}`);
+        evtSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.error) { evtSource.close(); progressModal.classList.add('hidden'); showError(data.error); return; }
+            const progress = data.progress || {};
+            const step = progress.step || 0;
+            const total = progress.total_steps || 11;
+            updateProgress(Math.round((step / total) * 100), progress.message || '处理中...');
+            if (data.status === 'completed') {
+                evtSource.close();
+                setTimeout(() => { window.location.href = `/result/${taskId}`; }, 400);
+            } else if (data.status === 'failed') {
+                evtSource.close();
+                progressModal.classList.add('hidden');
+                showError(progress.message || '审查失败');
+            }
+        };
+        evtSource.onerror = () => { evtSource.close(); };
+    }
 
-function showError(msg) {
-    errorMessage.textContent = msg;
-    errorModal.classList.remove('hidden');
-}
+    function updateProgress(percent, message) {
+        progressBar.style.width = percent + '%';
+        progressPercent.textContent = percent + '%';
+        progressMessage.textContent = message;
+    }
 
-closeError.addEventListener('click', () => errorModal.classList.add('hidden'));
-</script>
+    function showError(msg) {
+        errorMessage.textContent = msg;
+        errorModal.classList.remove('hidden');
+    }
 
+    closeError.addEventListener('click', () => errorModal.classList.add('hidden'));
+    </script>
 </body>
 </html>
