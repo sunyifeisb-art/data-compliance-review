@@ -1,4 +1,15 @@
-# Python
+# Local OpenClaw / agent state
+.openclaw/
+
+# Secrets / env files
+**/.env
+
+# Common temp dirs in this workspace
+.tmp*/
+tmp*/
+node_modules/
+
+# Data compliance review repo
 __pycache__/
 *.py[cod]
 *$py.class
@@ -22,24 +33,16 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# macOS
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# 运行时生成的上传文件和输出（Demo 样例除外）
 data-compliance-web/uploads/*
 !data-compliance-web/uploads/.gitkeep
 data-compliance-web/output/*
 !data-compliance-web/output/.gitkeep
-
-# 但保留测试样例和 Demo 数据
 test_output/*
