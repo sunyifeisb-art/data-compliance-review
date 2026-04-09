@@ -13,7 +13,7 @@
                     fontFamily: { sans: ['Inter', 'Noto Sans SC', 'sans-serif'] },
                     colors: {
                         primary: { 50: '#f0f4ff', 100: '#e0eaff', 500: '#3b66f5', 600: '#2549d1', 700: '#1a37ab', 900: '#0f1f5e' },
-                        risk: { high: '#ef4444', medium: '#f59e0b', low: '#3b82f6', none: '#22c55e' }
+                        risk: { high: '#ef4444', medium: '#6366f1', low: '#3b82f6', none: '#22c55e' }
                     }
                 }
             }
@@ -25,7 +25,7 @@
         .accordion-content { display: none; }
         .accordion-content.open { display: block; }
         .risk-high { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-        .risk-medium { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+        .risk-medium { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; }
         .risk-low { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
         .risk-none { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
         .btn-primary { background: linear-gradient(135deg, #3b66f5 0%, #2549d1 100%); color: #fff; }
@@ -104,7 +104,7 @@
             <div class="flex items-center gap-2">
                 <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200">{{ report.document_type or '未知类型' }}</span>
                 {% if report.auto_recheck_triggered %}
-                <span class="px-2.5 py-1 rounded-md bg-amber-50 text-amber-700 text-xs font-medium border border-amber-200">已触发自动复核</span>
+                <span class="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 text-xs font-medium border border-indigo-200">已触发自动复核</span>
                 {% endif %}
             </div>
         </div>
@@ -136,7 +136,7 @@
                 </div>
                 <div class="flex items-center gap-2 text-xs">
                     {% if cluster.high_risk_count > 0 %}<span class="px-1.5 py-0.5 rounded bg-red-100 text-red-700">{{ cluster.high_risk_count }} 高</span>{% endif %}
-                    {% if cluster.medium_risk_count > 0 %}<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">{{ cluster.medium_risk_count }} 中</span>{% endif %}
+                    {% if cluster.medium_risk_count > 0 %}<span class="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">{{ cluster.medium_risk_count }} 中</span>{% endif %}
                     {% if cluster.advisory_count > 0 %}<span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">{{ cluster.advisory_count }} 建议</span>{% endif %}
                 </div>
             </div>
@@ -200,7 +200,7 @@
                         </div>
                         {% endif %}
                         {% if item.auto_recheck %}
-                        <div class="flex items-center gap-2 text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                        <div class="flex items-center gap-2 text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                             <span class="text-xs font-medium">{{ item.auto_recheck_status or '已触发自动复核' }}</span>
                         </div>
@@ -219,7 +219,7 @@
             <h2 class="font-semibold text-slate-900 text-lg">整改任务清单</h2>
             <div class="flex items-center gap-2 text-xs">
                 <span class="px-2 py-0.5 rounded bg-red-100 text-red-700 font-medium">P1: {{ remediation.priority_counts.P1 }}</span>
-                <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">P2: {{ remediation.priority_counts.P2 }}</span>
+                <span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 font-medium">P2: {{ remediation.priority_counts.P2 }}</span>
                 <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">P3: {{ remediation.priority_counts.P3 }}</span>
             </div>
         </div>
@@ -229,7 +229,7 @@
                 <div class="flex items-start justify-between gap-3 mb-2">
                     <div class="flex items-center gap-2">
                         <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase
-                            {% if t.priority == 'P1' %}bg-red-100 text-red-700{% elif t.priority == 'P2' %}bg-amber-100 text-amber-700{% else %}bg-slate-100 text-slate-700{% endif %}">{{ t.priority }}</span>
+                            {% if t.priority == 'P1' %}bg-red-100 text-red-700{% elif t.priority == 'P2' %}bg-indigo-100 text-indigo-700{% else %}bg-slate-100 text-slate-700{% endif %}">{{ t.priority }}</span>
                         <h3 class="font-medium text-slate-900 text-sm">{{ t.title }}</h3>
                     </div>
                     <span class="text-xs text-slate-500 whitespace-nowrap">{{ t.owner_hint }}</span>
