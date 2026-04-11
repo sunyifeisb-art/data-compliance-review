@@ -154,6 +154,11 @@
                         <span>已触发自动复核</span>
                     </div>
                     {% endif %}
+                    {% if report.local_regulation_db and report.local_regulation_db.enabled %}
+                    <div class="mt-3 text-xs text-slate-500">
+                        法规库增强已生效：{{ report.local_regulation_db.matched_items }} 项已命中条款支撑，{{ report.local_regulation_db.unmatched_items }} 项暂未命中。
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="md:col-span-2 card p-6 bg-slate-50/60">
                     <p class="text-xs text-slate-500 tracking-wider uppercase mb-3 font-medium">优先行动</p>
@@ -235,6 +240,30 @@
                                     <div>
                                         <p class="text-[11px] text-slate-500 mb-1 font-medium">法规依据</p>
                                         <p class="text-slate-700">{{ item.legal_basis }}</p>
+                                    </div>
+                                    {% endif %}
+                                    {% if item.supporting_regulations %}
+                                    <div class="md:col-span-2">
+                                        <p class="text-[11px] text-slate-500 mb-2 font-medium">法规库命中</p>
+                                        <div class="space-y-2">
+                                            {% for reg in item.supporting_regulations %}
+                                            <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                                                <div class="flex flex-wrap items-center gap-2 text-xs mb-1">
+                                                    {% if reg.standard_code %}
+                                                    <span class="px-1.5 py-0.5 border border-slate-200 bg-slate-50 text-slate-600 rounded">{{ reg.standard_code }}</span>
+                                                    {% endif %}
+                                                    <span class="font-medium text-slate-800">{{ reg.title }}</span>
+                                                </div>
+                                                <p class="text-[11px] text-slate-500">
+                                                    {{ reg.effect_level or reg.doc_category }}
+                                                    {% if reg.match_keywords %} · 命中词：{{ reg.match_keywords | join('、') }}{% endif %}
+                                                </p>
+                                                {% if reg.snippet %}
+                                                <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ reg.snippet }}</p>
+                                                {% endif %}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
                                     </div>
                                     {% endif %}
                                     {% if item.evidence %}

@@ -4,7 +4,8 @@
 
 ## 1. 项目架构
 
-- **没有数据库**。用户上传的文件/文本保存在 `uploads/`，分析结果保存在 `output/{task_id}/`。
+- **主业务链没有任务数据库**。用户上传的文件/文本保存在 `uploads/`，分析结果保存在 `output/{task_id}/`。
+- 项目可选使用本地法规检索库 `knowledge-base/local-regulations.sqlite3` 对报告做法规增强，但它不承担任务状态存储。
 - 后端 = Python 脚本流水线，输出 JSON。
 - 前端 = Flask 渲染 HTML，消费这些 JSON。
 
@@ -62,9 +63,21 @@ GET /result/{task_id} → 结果页
       "risk_point": "风险标题",
       "risk_level": "中风险",
       "legal_basis": "法规依据",
+      "legal_basis_source": "mapped_or_existing",
       "reason": "原因分析",
       "suggestion": "修改建议",
       "evidence": ["证据片段1", "证据片段2"],
+      "supporting_regulations": [
+        {
+          "title": "支撑规范标题",
+          "standard_code": "GB/T xxxx-2025",
+          "effect_level": "国家标准/行业标准/技术指南",
+          "relative_path": "二、国家标准、行业标准合集/xxx.pdf",
+          "match_keywords": ["跨境", "个人信息"],
+          "match_score": 12,
+          "snippet": "命中的正文片段"
+        }
+      ],
       "auto_recheck": true,
       "auto_recheck_status": "自动复核后维持中风险",
       "theme_name": "主题名称"
@@ -72,6 +85,11 @@ GET /result/{task_id} → 结果页
   ]
 }
 ```
+
+其中：
+- `legal_basis` 仍表示主法规依据，保持现有口径。
+- `supporting_regulations` 为**可选字段**，表示从本地法规库命中的支撑规范，不替代主法规依据。
+- `local_regulation_db` 为报告级**可选字段**，用于记录本地法规库增强是否生效以及命中统计。
 
 ### 4.2 整改任务 `14_remediation_tasks.json`
 

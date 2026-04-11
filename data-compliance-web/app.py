@@ -19,9 +19,12 @@ app = Flask(__name__)
 
 # 配置
 BASE_DIR = Path(__file__).parent
+WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = WORKSPACE_ROOT / 'projects' / 'data-compliance-ai-project-kit'
 UPLOAD_FOLDER = BASE_DIR / 'uploads'
 OUTPUT_FOLDER = BASE_DIR / 'output'
 SCRIPTS_DIR = BASE_DIR / 'scripts'
+LOCAL_REGULATION_DB = PROJECT_ROOT / 'knowledge-base' / 'local-regulations.sqlite3'
 ALLOWED_EXTENSIONS = {'txt', 'md', 'doc', 'docx', 'pdf'}
 
 # 确保目录存在
@@ -58,6 +61,15 @@ def get_risk_level_order(level):
     return order_map.get(level, 0)
 
 
+def load_json_if_exists(path_str):
+    if not path_str:
+        return None
+    path = Path(path_str)
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
 def run_review_pipeline(task_id, input_path, document_name, is_text=False):
     """
     运行审查流水线，并通过SSE推送进度
@@ -85,7 +97,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
             'consistency_check'
         ]),
         ('aggregate', '汇总审查结果'),
-        ('enrich', '应用法规映射'),
+        ('enrich', '应用法规映射与法规库增强'),
         ('recheck', '自动复核'),
         ('cluster', '风险聚类分析'),
         ('build_packs', '生成专项审查包'),
@@ -221,22 +233,32 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
 
         subprocess.run(cmd, check=True, capture_output=True)
 
-        # 步骤7: 应用法规映射（可选）
-        update_progress(7, '正在应用法规映射...')
+        # 步骤7: 应用法规映射与法规库增强（可选）
+        update_progress(7, '正在应用法规映射与法规库增强...')
         time.sleep(0.3)
 
         norm_mapping = BASE_DIR / 'config' / 'default-norm-mappings.json'
+        mapped_report = work_dir / '07_report_mapped.json'
         enriched_report = work_dir / '07_report_enriched.json'
         if norm_mapping.exists():
             subprocess.run([
                 'python3', str(SCRIPTS_DIR / 'apply_external_norm_mapping.py'),
                 '--report', str(final_report),
                 '--mapping', str(norm_mapping),
+                '--output', str(mapped_report)
+            ], check=True, capture_output=True)
+            report_for_bundle = mapped_report
+        else:
+            report_for_bundle = final_report
+
+        if LOCAL_REGULATION_DB.exists():
+            subprocess.run([
+                'python3', str(PROJECT_ROOT / 'scripts' / 'enrich_report_with_regulation_db.py'),
+                '--report', str(report_for_bundle),
+                '--db', str(LOCAL_REGULATION_DB),
                 '--output', str(enriched_report)
             ], check=True, capture_output=True)
             report_for_bundle = enriched_report
-        else:
-            report_for_bundle = final_report
 
         # 步骤8: 自动复核
         update_progress(8, '正在执行自动复核...')
@@ -487,8 +509,16 @@ def result_page(task_id):
         reverse=True
     )
 
+    extra = {
+        'remediation': load_json_if_exists(task['result'].get('remediation')),
+        'evidence': load_json_if_exists(task['result'].get('evidence')),
+        'sdk_pack': load_json_if_exists(task['result'].get('sdk_pack')),
+        'cross_border_pack': load_json_if_exists(task['result'].get('cross_border_pack')),
+        'privacy_pack': load_json_if_exists(task['result'].get('privacy_pack')),
+    }
+
     return render_template('result.html', task=task, report=report,
-                          risk_stats=risk_stats, items=sorted_items)
+                          risk_stats=risk_stats, items=sorted_items, **extra)
 
 
 @app.route('/api/result/<task_id>')
@@ -513,7 +543,12 @@ def get_result(task_id):
         'task_id': task_id,
         'status': task['status'],
         'document_name': task['document_name'],
-        'report': report
+        'report': report,
+        'remediation': load_json_if_exists(task['result'].get('remediation')),
+        'evidence': load_json_if_exists(task['result'].get('evidence')),
+        'sdk_pack': load_json_if_exists(task['result'].get('sdk_pack')),
+        'cross_border_pack': load_json_if_exists(task['result'].get('cross_border_pack')),
+        'privacy_pack': load_json_if_exists(task['result'].get('privacy_pack')),
     })
 
 
@@ -532,6 +567,9 @@ def download_file(task_id, file_type):
         'report': ('report', '.json'),
         'remediation': ('remediation', '.json'),
         'evidence': ('evidence', '.json'),
+        'sdk_pack': ('sdk_pack', '.json'),
+        'cross_border_pack': ('cross_border_pack', '.json'),
+        'privacy_pack': ('privacy_pack', '.json'),
     }
 
     if file_type not in file_mapping:

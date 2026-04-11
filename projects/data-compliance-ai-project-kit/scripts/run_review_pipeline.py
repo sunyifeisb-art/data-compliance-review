@@ -26,6 +26,7 @@ def main() -> int:
     args = parser.parse_args()
 
     default_norm_mapping = ROOT / 'config' / 'default-norm-mappings.json'
+    local_regulation_db = ROOT / 'knowledge-base' / 'local-regulations.sqlite3'
 
     work_dir = Path(args.work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -37,6 +38,7 @@ def main() -> int:
     skeleton = work_dir / '05_report_skeleton.json'
     findings_dir = work_dir / '06_findings'
     final_report = work_dir / '07_report_final.json'
+    mapped_report = work_dir / '07_report_mapped.json'
     enriched_report = work_dir / '07_report_enriched.json'
     auto_rechecked_report = work_dir / '07_report_auto_rechecked.json'
     auto_recheck_queue = work_dir / '07_auto_recheck_queue.json'
@@ -90,6 +92,15 @@ def main() -> int:
             'python3', str(SCRIPTS / 'apply_external_norm_mapping.py'),
             '--report', str(final_report),
             '--mapping', norm_mapping_path,
+            '--output', str(mapped_report)
+        ])
+        report_for_bundle = mapped_report
+
+    if local_regulation_db.exists():
+        run([
+            'python3', str(SCRIPTS / 'enrich_report_with_regulation_db.py'),
+            '--report', str(report_for_bundle),
+            '--db', str(local_regulation_db),
             '--output', str(enriched_report)
         ])
         report_for_bundle = enriched_report
@@ -165,6 +176,7 @@ def main() -> int:
         'risk_clusters': str(risk_clusters),
         'report_for_bundle': str(report_for_bundle),
         'norm_mapping': norm_mapping_path,
+        'local_regulation_db': str(local_regulation_db) if local_regulation_db.exists() else '',
         'application_plan': str(application_plan),
         'evidence_checklist': str(evidence_checklist),
         'sdk_partner_review_pack': str(sdk_partner_pack),

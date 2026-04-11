@@ -45,6 +45,7 @@ REQUIRED = [
     "scripts/aggregate_review_findings.py",
     "scripts/auto_recheck_report.py",
     "scripts/apply_external_norm_mapping.py",
+    "scripts/enrich_report_with_regulation_db.py",
     "scripts/build_application_scenario_plan.py",
     "scripts/build_evidence_checklist.py",
     "scripts/build_sdk_partner_review_pack.py",
