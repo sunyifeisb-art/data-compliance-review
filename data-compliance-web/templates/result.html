@@ -32,6 +32,9 @@
             --green: #22c55e;
             --green-bg: #f0fdf4;
             --green-border: #bbf7d0;
+            --yellow: #ca8a04;
+            --yellow-bg: #fefce8;
+            --yellow-border: #fde047;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -329,6 +332,11 @@
             gap: 28px;
             align-items: start;
         }
+        .risk-col-l {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
         .risk-col-r {
             display: flex;
             flex-direction: column;
@@ -417,17 +425,17 @@
 
         /* Analysis Box */
         .analysis-box {
-            background: var(--bg-subtle);
+            background: var(--yellow-bg);
             border-radius: 12px;
             padding: 20px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--yellow-border);
         }
         .analysis-head {
             font-size: 14px;
             font-weight: 700;
             letter-spacing: 0.1em;
             text-transform: uppercase;
-            color: var(--text-secondary);
+            color: var(--yellow);
             margin-bottom: 12px;
             display: flex;
             align-items: center;
@@ -978,8 +986,6 @@
                                 {% endfor %}
                             {% endif %}
                             {% endif %}
-                        </div>
-                        <div class="risk-col-r">
                             <div class="analysis-box">
                                 <p class="analysis-head">风险分析</p>
                                 <p class="analysis-text">
@@ -992,13 +998,15 @@
                                     {% endif %}
                                 </p>
                             </div>
+                        </div>
+                        <div class="risk-col-r">
                             <div class="suggestion-box">
                                 <p class="suggestion-head">修改建议</p>
                                 <p class="suggestion-text">{{ item.suggestion }}</p>
                             </div>
                             {% if item.rewritten_clause %}
                             <div class="rewrite-box">
-                                <p class="rewrite-head">改写示例</p>
+                                <p class="rewrite-head">改写后条款</p>
                                 <p class="rewrite-text">{{ item.rewritten_clause }}</p>
                             </div>
                             {% endif %}

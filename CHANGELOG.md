@@ -6,6 +6,22 @@
 
 ## 2026-04-13
 
+### 17:02 CST — 你 — 优化风险卡片布局、改写示例精度与前端细节
+- 风险卡片左右分栏重新调整：左侧放置「原文摘录 + 风险分析」，右侧放置「修改建议 + 改写后条款」，优化法务阅读动线。
+- 风险分析区块新增柠檬黄浅色边框（`--yellow-bg: #fefce8` / `--yellow-border: #fde047`），与修改建议、改写后条款形成更清晰的语义区分。
+- 前端进度弹窗新增 checkpoint 去重逻辑，解决 LLM 增强阶段「正在生成 AI 优化建议与改写示例，请稍候…」重复堆叠的问题。
+- 优化 `enhance_suggestions_with_llm.py` 的 System Prompt：
+  - `optimized_suggestion` 明确禁止 Markdown 表格、列表，要求输出连贯叙述文字；
+  - `rewritten_clause` 明确要求基于原文证据进行「针对性改写」，生成可直接替换原文的条款，而非通用模板。
+- `render_risk_report.py` 与结果页标签统一从「改写示例」改为「改写后条款」，语义更贴近实际用途。
+- **文件改动**：`data-compliance-web/templates/result.html`、`data-compliance-web/templates/index.html`、`data-compliance-web/scripts/enhance_suggestions_with_llm.py`、`data-compliance-web/scripts/render_risk_report.py`
+
+### 16:39 CST — 你 — 修复 Flask 重载导致任务状态丢失与 LLM 增强可用性
+- 新增任务状态持久化机制：`app.py` 在每次进度更新、任务完成或失败时将 `tasks[task_id]` 写入 `output/<task_id>/task_state.json`。
+- 所有查询路由（`/api/progress`、`/result`、`/api/result`、`/api/download`）优先从磁盘恢复任务状态，解决 `debug=True` 热重载后内存字典丢失导致的「自动复核卡住」和「任务不存在」问题。
+- LLM 增强步骤增加独立进度提示「正在生成 AI 优化建议与改写示例」，并支持从 `.deepseek_key` 文件读取 API Key；失败时抛出明确错误信息。
+- **文件改动**：`data-compliance-web/app.py`、`CHANGELOG.md`
+
 ### 14:26 CST — 你 — 前端输出页重构与首页体验优化
 - 将结果页 `result.html` 重构为与首页一致的 Plus Jakarta Sans + Inter 设计系统，统一配色与卡片质感。
 - 调整风险卡片两栏布局：左侧仅保留原文摘录，右侧放置「风险分析」与「修改建议」，解决修改建议框过度撑大问题。

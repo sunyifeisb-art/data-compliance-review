@@ -35,6 +35,32 @@ OUTPUT_FOLDER.mkdir(exist_ok=True)
 tasks = {}
 
 
+def _task_state_path(task_id: str) -> Path:
+    return OUTPUT_FOLDER / task_id / 'task_state.json'
+
+
+def save_task_state(task_id: str):
+    if task_id in tasks:
+        _task_state_path(task_id).write_text(json.dumps(tasks[task_id], ensure_ascii=False, indent=2), encoding='utf-8')
+
+
+def load_task_state(task_id: str) -> dict | None:
+    path = _task_state_path(task_id)
+    if path.exists():
+        return json.loads(path.read_text(encoding='utf-8'))
+    return None
+
+
+def ensure_task_loaded(task_id: str) -> bool:
+    if task_id in tasks:
+        return True
+    state = load_task_state(task_id)
+    if state is not None:
+        tasks[task_id] = state
+        return True
+    return False
+
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -128,6 +154,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
             'status': status,
             'detail': detail
         }
+        save_task_state(task_id)
 
     try:
         # 步骤1: 预处理
@@ -294,12 +321,22 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         report_for_bundle = auto_rechecked_report
 
         # 步骤8+1: LLM 增强建议与改写示例
+        update_progress(8, '正在生成 AI 优化建议与改写示例，请稍候...')
         llm_enhanced_report = work_dir / '07_report_llm_enhanced.json'
-        subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'enhance_suggestions_with_llm.py'),
+        api_key = os.environ.get('DEEPSEEK_API_KEY', '').strip()
+        key_file = BASE_DIR / '.deepseek_key'
+        if not api_key and key_file.exists():
+            api_key = key_file.read_text(encoding='utf-8').strip()
+        llm_result = subprocess.run([
+            sys.executable, str(SCRIPTS_DIR / 'enhance_suggestions_with_llm.py'),
             '--report', str(report_for_bundle),
             '--output', str(llm_enhanced_report),
-        ], check=True, capture_output=True)
+            '--api-key', api_key,
+        ], capture_output=True, text=True)
+        if llm_result.returncode != 0:
+            raise RuntimeError(
+                f"LLM 增强失败 (exit {llm_result.returncode}): {llm_result.stderr or llm_result.stdout}"
+            )
         report_for_bundle = llm_enhanced_report
 
         bundle_result = subprocess.run([
@@ -399,6 +436,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
             'message': '审查完成',
             'status': 'completed'
         }
+        save_task_state(task_id)
 
     except Exception as e:
         import traceback
@@ -413,6 +451,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
             'message': f'出错了: {str(e)}',
             'status': 'error'
         }
+        save_task_state(task_id)
 
 
 @app.route('/')
@@ -507,6 +546,11 @@ def upload_file():
 @app.route('/api/progress/<task_id>')
 def get_progress(task_id):
     """SSE推送进度"""
+    if not ensure_task_loaded(task_id):
+        def generate():
+            yield f'data: {json.dumps({"error": "任务不存在"})}\n\n'
+        return Response(generate(), mimetype='text/event-stream')
+
     def generate():
         while True:
             if task_id not in tasks:
@@ -534,7 +578,7 @@ def get_progress(task_id):
 @app.route('/result/<task_id>')
 def result_page(task_id):
     """结果展示页面"""
-    if task_id not in tasks:
+    if not ensure_task_loaded(task_id):
         return '任务不存在', 404
 
     task = tasks[task_id]
@@ -578,7 +622,7 @@ def result_page(task_id):
 @app.route('/api/result/<task_id>')
 def get_result(task_id):
     """API获取结果"""
-    if task_id not in tasks:
+    if not ensure_task_loaded(task_id):
         return jsonify({'error': '任务不存在'}), 404
 
     task = tasks[task_id]
@@ -609,7 +653,7 @@ def get_result(task_id):
 @app.route('/api/download/<task_id>/<file_type>')
 def download_file(task_id, file_type):
     """下载报告文件"""
-    if task_id not in tasks:
+    if not ensure_task_loaded(task_id):
         return '任务不存在', 404
 
     task = tasks[task_id]

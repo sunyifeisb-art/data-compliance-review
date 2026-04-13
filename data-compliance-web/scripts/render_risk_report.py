@@ -64,7 +64,7 @@ def render(data: dict) -> str:
             lines.append(f"- 主要风险：存在 {item.get('risk_point', '')}。")
         lines.append(f"- 修改建议：{item.get('suggestion', '')}")
         if item.get("rewritten_clause"):
-            lines.append(f"- 改写示例：{item.get('rewritten_clause')}")
+            lines.append(f"- 改写后条款：{item.get('rewritten_clause')}")
         if item.get("source_sections"):
             lines.append("- 问题内容：")
             for section in item.get("source_sections", [])[:2]:

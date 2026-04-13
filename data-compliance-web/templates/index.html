@@ -636,6 +636,8 @@ function setProgress(pct, msg) {
     progressMsg.textContent = msg;
 }
 function addCheckpoint(msg) {
+    const last = checkpoints.lastElementChild;
+    if (last && last.textContent.trim() === msg.trim()) return;
     const el = document.createElement('div');
     el.className = 'checkpoint-entry';
     el.innerHTML = `<span class="checkpoint-dot done"></span><span>${msg}</span>`;
