@@ -2,27 +2,40 @@
 set -euo pipefail
 
 WEB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WORKSPACE_ROOT="$(cd "$WEB_DIR/.." && pwd)"
+PROJECT_DIR="$WORKSPACE_ROOT/projects/data-compliance-ai-project-kit"
 HOST_PYTHON="$(command -v python3)"
-DEFAULT_ENTRY_DIR="$HOME/Desktop/研发测试/data-compliance-review-codex"
-if [ -d "$DEFAULT_ENTRY_DIR/web" ]; then
-  ENTRY_DIR="$DEFAULT_ENTRY_DIR"
-  WEB_ENTRY="$DEFAULT_ENTRY_DIR/web"
-elif [ -d "$DEFAULT_ENTRY_DIR/data-compliance-web" ]; then
-  ENTRY_DIR="$DEFAULT_ENTRY_DIR"
-  WEB_ENTRY="$DEFAULT_ENTRY_DIR/data-compliance-web"
-else
-  ENTRY_DIR="$(cd "$WEB_DIR/.." && pwd)"
-  WEB_ENTRY="$WEB_DIR"
-fi
+RUNTIME_PYTHON="/usr/bin/python3"
+
 APP_NAME="ComplianceAI"
-APP_BUNDLE="${1:-$HOME/Desktop/${APP_NAME}.app}"
 ICON_SOURCE="${2:-$HOME/Desktop/complianceai-icon-v2.svg}"
+TARGET_ARCH="${3:-arm64}"
 BUILD_ID="$(date +%Y%m%d%H%M%S)"
+
+case "$TARGET_ARCH" in
+  arm64)
+    ARCH_LABEL="AppleSilicon"
+    TARGET_TRIPLE="arm64-apple-macos12.0"
+    ;;
+  x86_64)
+    ARCH_LABEL="Intel"
+    TARGET_TRIPLE="x86_64-apple-macos12.0"
+    ;;
+  *)
+    echo "不支持的架构: $TARGET_ARCH" >&2
+    echo "可选值: arm64 | x86_64" >&2
+    exit 1
+    ;;
+esac
+
+APP_BUNDLE="${1:-$HOME/Desktop/${APP_NAME}-${ARCH_LABEL}.app}"
 ICON_BASENAME="AppIcon-${BUILD_ID}"
+
 TMP_DIR="$(mktemp -d)"
 ICONSET_DIR="$TMP_DIR/${APP_NAME}.iconset"
 PNG_BASE="$TMP_DIR/${APP_NAME}.png"
 STYLED_PNG="$TMP_DIR/${APP_NAME}-styled.png"
+TMP_PYTHON_LIB="$TMP_DIR/python-lib"
 
 cleanup() {
   rm -rf "$TMP_DIR"
@@ -34,14 +47,12 @@ if [ ! -f "$ICON_SOURCE" ]; then
   exit 1
 fi
 
-mkdir -p "$ICONSET_DIR"
-
-if [ ! -d "$WEB_DIR/venv" ]; then
-  python3 -m venv "$WEB_DIR/venv"
+if [ ! -d "$PROJECT_DIR" ]; then
+  echo "未找到项目目录: $PROJECT_DIR" >&2
+  exit 1
 fi
 
-source "$WEB_DIR/venv/bin/activate"
-pip install -q -r "$WEB_DIR/requirements.txt"
+mkdir -p "$ICONSET_DIR" "$TMP_PYTHON_LIB"
 
 qlmanage -t -s 1024 -o "$TMP_DIR" "$ICON_SOURCE" >/dev/null 2>&1
 GENERATED_PNG="$(find "$TMP_DIR" -maxdepth 1 -name '*.png' | head -n 1)"
@@ -127,8 +138,41 @@ for size in 16 32 128 256 512; do
   sips -z "$retina" "$retina" "$STYLED_PNG" --out "$ICONSET_DIR/icon_${size}x${size}@2x.png" >/dev/null
 done
 
+"$RUNTIME_PYTHON" -m pip install --quiet --upgrade --no-compile --target "$TMP_PYTHON_LIB" -r "$WEB_DIR/requirements.txt"
+
 rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
+
+PAYLOAD_ROOT="$APP_BUNDLE/Contents/Resources/payload"
+WEB_PAYLOAD="$PAYLOAD_ROOT/web"
+PROJECT_PAYLOAD="$PAYLOAD_ROOT/projects/data-compliance-ai-project-kit"
+PYTHON_LIB_PAYLOAD="$APP_BUNDLE/Contents/Resources/python-lib"
+
+mkdir -p "$WEB_PAYLOAD" "$PROJECT_PAYLOAD" "$PYTHON_LIB_PAYLOAD"
+
+rsync -a \
+  --exclude 'venv' \
+  --exclude 'output' \
+  --exclude 'uploads' \
+  --exclude '__pycache__' \
+  --exclude '.git' \
+  --exclude '*.pyc' \
+  "$WEB_DIR/" "$WEB_PAYLOAD/"
+
+rsync -a \
+  --exclude 'tests' \
+  --exclude 'docs' \
+  --exclude 'references' \
+  --exclude 'workflows' \
+  --exclude 'skill' \
+  --exclude 'samples' \
+  --exclude '__pycache__' \
+  --exclude '.git' \
+  --exclude '*.pyc' \
+  "$PROJECT_DIR/" "$PROJECT_PAYLOAD/"
+
+rsync -a "$TMP_PYTHON_LIB/" "$PYTHON_LIB_PAYLOAD/"
+
 iconutil -c icns "$ICONSET_DIR" -o "$APP_BUNDLE/Contents/Resources/${ICON_BASENAME}.icns"
 
 cat >"$APP_BUNDLE/Contents/Info.plist" <<PLIST
@@ -143,11 +187,11 @@ cat >"$APP_BUNDLE/Contents/Info.plist" <<PLIST
   <key>CFBundleExecutable</key>
   <string>${APP_NAME}</string>
   <key>CFBundleIdentifier</key>
-  <string>com.complianceai.desktop.native</string>
+  <string>com.complianceai.desktop.${TARGET_ARCH}</string>
   <key>CFBundleVersion</key>
   <string>${BUILD_ID}</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.1</string>
+  <string>1.2</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleIconFile</key>
@@ -188,8 +232,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     private var window: NSWindow!
     private var webView: WKWebView!
     private var serverTask: Process?
-    private let entryDir = "${ENTRY_DIR}"
-    private let webDir = "${WEB_ENTRY}"
+
+    private var resourceRoot: String {
+        Bundle.main.resourceURL!.path
+    }
+
+    private var webDir: String {
+        resourceRoot + "/payload/web"
+    }
+
+    private var pythonLib: String {
+        resourceRoot + "/python-lib"
+    }
+
     private let port = 5100
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -222,11 +277,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         window.title = ""
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = false
-        window.isMovableByWindowBackground = false
         if #available(macOS 11.0, *) {
             window.toolbarStyle = .unifiedCompact
         }
-        window.delegate = self
         window.center()
         window.minSize = NSSize(width: 1200, height: 820)
 
@@ -262,11 +315,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     private func startServer() {
         let process = Process()
         process.currentDirectoryURL = URL(fileURLWithPath: webDir)
-        process.executableURL = URL(fileURLWithPath: webDir + "/venv/bin/python3")
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
         process.arguments = [webDir + "/server_entry.py", "--port", String(port)]
         var env = ProcessInfo.processInfo.environment
-        env["COMPLIANCEAI_PYTHON"] = webDir + "/venv/bin/python3"
+        env["COMPLIANCEAI_PYTHON"] = "/usr/bin/python3"
         env["PYTHONUNBUFFERED"] = "1"
+        env["PYTHONPATH"] = pythonLib
         process.environment = env
 
         let pipe = Pipe()
@@ -288,13 +342,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
 
     private func pollServerReadiness() {
         let url = URL(string: "http://127.0.0.1:\\(port)/")!
-        let deadline = Date().addingTimeInterval(20)
+        let deadline = Date().addingTimeInterval(30)
         func tryLoad() {
             guard Date() < deadline else {
-                showFatal("应用启动超时，请检查 Python 运行环境。")
-                return
+                showFatal("应用启动超时，请检查打包资源是否完整。")
             }
-            let task = URLSession.shared.dataTask(with: url) { [weak self] _, response, error in
+            let task = URLSession.shared.dataTask(with: url) { [weak self] _, response, _ in
                 guard let self else { return }
                 if let http = response as? HTTPURLResponse, http.statusCode == 200 {
                     DispatchQueue.main.async {
@@ -329,6 +382,7 @@ app.run()
 SWIFT
 
 swiftc \
+  -target "$TARGET_TRIPLE" \
   -framework Cocoa \
   -framework WebKit \
   "$SWIFT_SOURCE" \
