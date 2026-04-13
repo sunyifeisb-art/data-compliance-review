@@ -3,324 +3,1034 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>审查结果 - 数据合规智能审查系统</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'Noto Sans SC', 'sans-serif'] },
-                    colors: {
-                        primary: { 50: '#f0f4ff', 100: '#e0eaff', 500: '#3b66f5', 600: '#2549d1', 700: '#1a37ab', 900: '#0f1f5e' },
-                        risk: { high: '#ef4444', medium: '#6366f1', low: '#3b82f6', none: '#22c55e' }
-                    }
-                }
-            }
-        }
-    </script>
+    <title>审查结果 — ComplianceAI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        html { scroll-behavior: smooth; }
-        body { background: #f6f7fb; }
-        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; }
-        .side-nav a.active { color: #0f172a; border-left-color: #3b66f5; font-weight: 500; }
-        .btn-primary { background: linear-gradient(135deg, #3b66f5 0%, #2549d1 100%); transition: all 0.2s ease; }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -4px rgba(59,102,245,0.35); }
-        .tab-active { border-bottom: 2px solid #3b66f5; color: #0f172a; font-weight: 500; }
-        .tab-inactive { color: #64748b; }
-        .tab-inactive:hover { color: #334155; }
-        .risk-bar-high { border-left: 3px solid #ef4444; }
-        .risk-bar-medium { border-left: 3px solid #6366f1; }
-        .risk-bar-low { border-left: 3px solid #3b82f6; }
-        .risk-bar-none { border-left: 3px solid #22c55e; }
-        .badge-high { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-        .badge-medium { background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; }
-        .badge-low { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
-        .badge-none { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-        .fold-content { display: none; }
+        :root {
+            --bg: #ffffff;
+            --bg-subtle: #f8fafc;
+            --bg-elevated: #ffffff;
+            --accent: #4f46e5;
+            --accent-light: #e0e7ff;
+            --accent-hover: #4338ca;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 20px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+            --red: #ef4444;
+            --red-bg: #fef2f2;
+            --red-border: #fecaca;
+            --orange: #f97316;
+            --orange-bg: #fff7ed;
+            --orange-border: #fed7aa;
+            --blue: #3b82f6;
+            --blue-bg: #eff6ff;
+            --blue-border: #bfdbfe;
+            --green: #22c55e;
+            --green-bg: #f0fdf4;
+            --green-border: #bbf7d0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background: var(--bg-subtle);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 50;
+        }
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .logo {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        .logo span { color: var(--accent); }
+        .back-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .back-link:hover {
+            background: var(--bg-subtle);
+            color: var(--text-primary);
+        }
+        .header-doc {
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Layout */
+        .page-wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 48px;
+            padding-top: 40px;
+            padding-bottom: 80px;
+        }
+
+        /* Sidebar */
+        .sidebar { position: sticky; top: 100px; align-self: start; }
+        .side-nav-title {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .side-nav-list { list-style: none; }
+        .side-nav-list li + li { margin-top: 4px; }
+        .side-nav-list a {
+            display: block;
+            padding: 10px 14px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        .side-nav-list a:hover {
+            background: var(--bg);
+            color: var(--text-primary);
+        }
+        .side-nav-list a.active {
+            background: var(--accent-light);
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .side-count {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+        .side-downloads {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        .dl-head {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .dl-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .dl-link:hover { color: var(--accent); }
+
+        /* Content */
+        .content { min-width: 0; }
+        section { margin-bottom: 48px; }
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .section-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .section-meta {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Overview Cards */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .ov-card {
+            background: var(--bg);
+            border-radius: 20px;
+            padding: 28px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .ov-label {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ov-label::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 14px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+        .ov-headline {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.35;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+        }
+        .ov-headline .hl-accent { color: var(--accent); }
+        .ov-headline .hl-red { color: var(--red); }
+        .risk-tally {
+            display: flex;
+            gap: 40px;
+            margin-top: 20px;
+        }
+        .tally-item { text-align: center; }
+        .tally-num {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .tally-num.red { color: var(--red); }
+        .tally-num.orange { color: var(--orange); }
+        .tally-num.blue { color: var(--blue); }
+        .tally-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .tally-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Priority Badge */
+        .priority-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            border-radius: 20px;
+            margin-bottom: 12px;
+        }
+        .priority-p1 { background: var(--red-bg); color: var(--red); }
+        .priority-p2 { background: var(--orange-bg); color: var(--orange); }
+        .priority-p3 { background: var(--bg-subtle); color: var(--text-muted); border: 1px solid var(--border); }
+
+        .pa-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; line-height: 1.4; }
+        .pa-objective { font-size: 15px; color: var(--text-secondary); line-height: 1.7; }
+        .pa-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .pa-link:hover { color: var(--accent-hover); }
+
+        /* Notice Bar */
+        .notice-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #fefce8;
+            border: 1px solid #fde047;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #a16207;
+            margin-top: 16px;
+        }
+
+        /* Risk Items */
+        .risk-list { display: flex; flex-direction: column; gap: 16px; }
+        .risk-item {
+            background: var(--bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--text-muted);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .risk-item.lvl-high { border-left-color: var(--red); }
+        .risk-item.lvl-medium { border-left-color: var(--orange); }
+        .risk-item.lvl-low { border-left-color: var(--blue); }
+        .risk-item.lvl-none { border-left-color: var(--green); }
+
+        .risk-body {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            align-items: start;
+        }
+        .risk-col-r {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .risk-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .risk-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 20px;
+        }
+        .rb-high { background: var(--red-bg); color: var(--red); }
+        .rb-medium { background: var(--orange-bg); color: var(--orange); }
+        .rb-low { background: var(--blue-bg); color: var(--blue); }
+        .rb-none { background: var(--green-bg); color: var(--green); }
+        .theme-tag {
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 4px 10px;
+            background: var(--bg-subtle);
+            border-radius: 20px;
+        }
+        .risk-point {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+        .field-head {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .risk-quote {
+            display: block;
+            border-left: 3px solid var(--border);
+            padding: 8px 14px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            font-style: italic;
+            background: var(--bg-subtle);
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 8px;
+        }
+        .risk-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-top: 12px;
+        }
+        .risk-desc strong { color: var(--text-primary); font-weight: 600; }
+
+        /* Suggestion Box */
+        .suggestion-box {
+            background: var(--accent-light);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .suggestion-head {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .suggestion-text { font-size: 14px; line-height: 1.7; color: var(--text-secondary); }
+
+        /* Analysis Box */
+        .analysis-box {
+            background: var(--bg-subtle);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+        .analysis-head {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .analysis-text { font-size: 14px; line-height: 1.7; color: var(--text-secondary); }
+
+        /* Fold */
+        .fold-row {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-subtle);
+        }
+        .fold-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-family: inherit;
+            padding: 0;
+            transition: color 0.2s;
+        }
+        .fold-toggle:hover { color: var(--text-primary); }
+        .fold-icon { transition: transform 0.2s; }
+        .fold-content { display: none; padding: 20px 0 8px; }
         .fold-content.open { display: block; }
+
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .detail-block.full { grid-column: 1 / -1; }
+        .detail-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .detail-text { font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+
+        .reg-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+        .reg-code {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: var(--bg-subtle);
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .reg-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 8px 0 4px; }
+        .reg-meta { font-size: 12px; color: var(--text-muted); }
+        .reg-snippet { font-size: 12px; color: var(--text-secondary); margin-top: 8px; line-height: 1.6; }
+
+        .recheck-note {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #fefce8;
+            border: 1px solid #fde047;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #a16207;
+        }
+
+        /* Clusters */
+        .cluster-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .cluster-card {
+            background: var(--bg);
+            border-radius: 16px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: all 0.2s;
+        }
+        .cluster-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        .cluster-name { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; }
+        .cluster-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+        .cluster-count {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-muted);
+            line-height: 1;
+        }
+
+        /* Tasks */
+        .task-list { display: flex; flex-direction: column; gap: 12px; }
+        .task-card {
+            background: var(--bg);
+            border-radius: 16px;
+            padding: 20px 24px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .task-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .task-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+        .task-owner {
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--bg-subtle);
+            padding: 4px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .task-obj { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+        /* Evidence Table */
+        .evidence-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--bg);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .evidence-table th {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            text-align: left;
+            padding: 16px 20px;
+            background: var(--bg-subtle);
+            border-bottom: 1px solid var(--border);
+        }
+        .evidence-table td { padding: 18px 20px; vertical-align: top; font-size: 14px; }
+        .evidence-table tr + tr td { border-top: 1px solid var(--border); }
+        .ev-point { font-weight: 600; color: var(--text-primary); margin-top: 6px; font-size: 14px; }
+        .ev-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .ev-items { list-style: none; }
+        .ev-items li {
+            display: flex;
+            gap: 10px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding: 4px 0;
+        }
+        .ev-items li::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin-top: 8px;
+            flex-shrink: 0;
+        }
+
+        /* Packs */
+        .pack-container {
+            background: var(--bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .pack-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-subtle);
+        }
+        .pack-tab {
+            padding: 14px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .pack-tab:hover { color: var(--text-secondary); }
+        .pack-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .pack-panel { padding: 24px; }
+        .pack-scenario {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            padding: 10px 14px;
+            background: var(--bg-subtle);
+            border-radius: 8px;
+        }
+        .pack-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .pack-section {
+            background: var(--bg-subtle);
+            border-radius: 12px;
+            padding: 18px 20px;
+        }
+        .pack-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+        }
+        .pack-items { list-style: none; }
+        .pack-items li {
+            display: flex;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 5px 0;
+        }
+        .pack-items li::before {
+            content: '✓';
+            color: var(--accent);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            background: var(--bg);
+            padding: 24px 40px;
+        }
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .footer-note { font-size: 13px; color: var(--text-muted); }
+
+        /* Mobile nav */
+        .mobile-nav {
+            display: none;
+            overflow-x: auto;
+            scrollbar-width: none;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 72px;
+            z-index: 40;
+        }
         .mobile-nav::-webkit-scrollbar { display: none; }
-        .mobile-nav { -ms-overflow-style: none; scrollbar-width: none; }
+        .mobile-nav-inner {
+            display: flex;
+            padding: 8px 20px;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .mobile-nav-inner a {
+            padding: 8px 14px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+        .mobile-nav-inner a:hover {
+            background: var(--bg-subtle);
+            color: var(--text-primary);
+        }
+
+        /* Loading states */
+        .state-page {
+            max-width: 480px;
+            margin: 100px auto;
+            padding: 0 24px;
+            text-align: center;
+        }
+        .state-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+            background: var(--bg);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: var(--shadow);
+        }
+        .state-icon.err {
+            background: var(--red-bg);
+            color: var(--red);
+        }
+        .state-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+        .state-sub { font-size: 15px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 28px; }
+        .btn-retry {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+        }
+        .btn-retry:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1.2s linear infinite; }
+
+        @media (max-width: 900px) {
+            .page-wrap { grid-template-columns: 1fr; padding: 24px 20px 60px; gap: 32px; }
+            .sidebar { display: none; }
+            .mobile-nav { display: block; }
+            .header-inner { padding: 0 20px; }
+            .header-doc { display: none; }
+            .overview-grid { grid-template-columns: 1fr; }
+            .risk-body { grid-template-columns: 1fr; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .cluster-grid { grid-template-columns: 1fr; }
+            .pack-grid { grid-template-columns: 1fr; }
+            footer { padding: 20px; }
+            .footer-inner { flex-direction: column; gap: 8px; text-align: center; }
+        }
     </style>
 </head>
-<body class="font-sans text-slate-800">
+<body>
 
-<header class="bg-white border-b border-slate-200 sticky top-0 z-40">
-    <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <a href="/" class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+<!-- Header -->
+<header>
+    <div class="header-inner">
+        <div class="header-left">
+            <a href="/" class="logo">Compliance<span>AI</span></a>
+            <a href="/" class="back-link">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                返回首页
             </a>
-            <div>
-                <h1 class="font-semibold text-slate-900 text-sm">审查结果</h1>
-                <p class="text-xs text-slate-500">{{ task.document_name }}</p>
-            </div>
         </div>
-        <a href="/" class="text-xs font-medium text-slate-600 hover:text-primary-600">返回首页</a>
+        <span class="header-doc">{{ task.document_name }}</span>
     </div>
 </header>
 
 {% if task.status == 'pending' or task.status == 'running' %}
-<main class="max-w-xl mx-auto px-6 py-16 text-center">
-    <div class="card p-10">
-        <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-primary-50 flex items-center justify-center">
-            <svg class="w-6 h-6 text-primary-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        </div>
-        <h2 class="text-xl font-semibold text-slate-900 mb-1">正在审查中</h2>
-        <p class="text-sm text-slate-500">请稍候，正在分析文档合规性</p>
+<!-- Loading -->
+<div class="state-page">
+    <div class="state-icon">
+        <svg class="animate-spin" width="28" height="28" fill="none" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="var(--border)" stroke-width="3"></circle>
+            <path fill="var(--accent)" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
     </div>
-</main>
+    <h2 class="state-title">正在审查中</h2>
+    <p class="state-sub">请稍候，系统正在分析文档合规性</p>
+</div>
 
 {% elif task.status == 'failed' %}
-<main class="max-w-xl mx-auto px-6 py-16 text-center">
-    <div class="card p-10">
-        <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center text-red-500">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </div>
-        <h2 class="text-xl font-semibold text-slate-900 mb-1">审查失败</h2>
-        <p class="text-slate-500 text-sm mb-6">{{ task.error or '未知错误' }}</p>
-        <a href="/" class="inline-block px-5 py-2 text-white text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800">重新审查</a>
-    </div>
-</main>
+<!-- Error -->
+<div class="state-page">
+    <div class="state-icon err">⚠️</div>
+    <h2 class="state-title">审查失败</h2>
+    <p class="state-sub">{{ task.error or '发生未知错误，请重新提交' }}</p>
+    <a href="/" class="btn-retry">重新审查</a>
+</div>
 
 {% elif task.status == 'completed' and report %}
 
-<!-- Mobile horizontal nav -->
-<nav class="md:hidden sticky top-14 z-30 bg-white border-b border-slate-200 mobile-nav overflow-x-auto">
-    <div class="flex items-center space-x-1 px-4 py-2 whitespace-nowrap text-sm">
-        <a href="#overview" class="px-3 py-1 text-slate-700">概览</a>
-        <a href="#risks" class="px-3 py-1 text-slate-700">风险详情</a>
-        <a href="#clusters" class="px-3 py-1 text-slate-700">风险聚类</a>
-        <a href="#tasks" class="px-3 py-1 text-slate-700">整改任务</a>
-        <a href="#evidence" class="px-3 py-1 text-slate-700">证据清单</a>
-        <a href="#packs" class="px-3 py-1 text-slate-700">专项审查包</a>
+<!-- Mobile nav -->
+<nav class="mobile-nav">
+    <div class="mobile-nav-inner">
+        <a href="#overview">概览</a>
+        <a href="#risks">风险详情</a>
+        {% if report.risk_clusters %}<a href="#clusters">风险聚类</a>{% endif %}
+        {% if remediation and remediation.tasks %}<a href="#tasks">整改任务</a>{% endif %}
+        {% if evidence and evidence.checklist %}<a href="#evidence">证据清单</a>{% endif %}
+        {% if (sdk_pack and sdk_pack.enabled) or (cross_border_pack and cross_border_pack.enabled) or (privacy_pack and privacy_pack.enabled) %}<a href="#packs">专项审查包</a>{% endif %}
     </div>
 </nav>
 
-<div class="max-w-6xl mx-auto px-6 py-8 flex items-start gap-8">
-    <!-- Desktop side nav -->
-    <aside class="hidden md:block w-52 sticky top-24 shrink-0">
-        <nav class="side-nav space-y-1 text-sm text-slate-500">
-            <a href="#overview" class="block pl-3 py-1.5 border-l-2 border-transparent hover:text-slate-800 transition-colors" data-nav="overview">概览</a>
-            <a href="#risks" class="block pl-3 py-1.5 border-l-2 border-transparent hover:text-slate-800 transition-colors" data-nav="risks">风险详情 <span class="text-xs text-slate-400">({{ items|length }})</span></a>
-            <a href="#clusters" class="block pl-3 py-1.5 border-l-2 border-transparent hover:text-slate-800 transition-colors" data-nav="clusters">风险聚类</a>
-            <a href="#tasks" class="block pl-3 py-1.5 border-l-2 border-transparent hover:text-slate-800 transition-colors" data-nav="tasks">整改任务</a>
-            <a href="#evidence" class="block pl-3 py-1.5 border-l-2 border-transparent hover:text-slate-800 transition-colors" data-nav="evidence">证据清单</a>
-            <a href="#packs" class="block pl-3 py-1.5 border-l-2 border-transparent hover:text-slate-800 transition-colors" data-nav="packs">专项审查包</a>
-        </nav>
-        <div class="mt-8 pt-6 border-t border-slate-200">
-            <a href="/api/download/{{ task.id }}/report" class="block text-sm text-slate-600 hover:text-primary-600 mb-2">下载完整报告 ↓</a>
-            <a href="/api/download/{{ task.id }}/report_md" class="block text-sm text-slate-600 hover:text-primary-600 mb-2">下载完整报告 Markdown ↓</a>
-            <a href="/api/download/{{ task.id }}/remediation" class="block text-sm text-slate-600 hover:text-primary-600">下载整改清单 ↓</a>
+<div class="page-wrap">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <p class="side-nav-title">导航</p>
+        <ul class="side-nav-list">
+            <li><a href="#overview" data-nav="overview">概览</a></li>
+            <li><a href="#risks" data-nav="risks">风险详情 <span class="side-count">({{ items|length }})</span></a></li>
+            {% if report.risk_clusters %}<li><a href="#clusters" data-nav="clusters">风险聚类</a></li>{% endif %}
+            {% if remediation and remediation.tasks %}<li><a href="#tasks" data-nav="tasks">整改任务</a></li>{% endif %}
+            {% if evidence and evidence.checklist %}<li><a href="#evidence" data-nav="evidence">证据清单</a></li>{% endif %}
+            {% if (sdk_pack and sdk_pack.enabled) or (cross_border_pack and cross_border_pack.enabled) or (privacy_pack and privacy_pack.enabled) %}<li><a href="#packs" data-nav="packs">专项审查包</a></li>{% endif %}
+        </ul>
+        <div class="side-downloads">
+            <p class="dl-head">下载报告</p>
+            <a href="/api/download/{{ task.id }}/report" class="dl-link">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                完整报告 JSON
+            </a>
+            <a href="/api/download/{{ task.id }}/report_md" class="dl-link">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                完整报告 Markdown
+            </a>
+            <a href="/api/download/{{ task.id }}/remediation" class="dl-link">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                整改任务清单
+            </a>
         </div>
     </aside>
 
-    <!-- Main content -->
-    <main class="flex-1 min-w-0">
-        <!-- Executive Summary -->
-        <section id="overview" class="mb-8">
-            <div class="grid md:grid-cols-5 gap-4">
-                <div class="md:col-span-3 card p-6">
-                    <p class="text-xs text-slate-500 tracking-wider uppercase mb-3 font-medium">审查结论</p>
-                    {% set p1_count = remediation.priority_counts.P1 if remediation else 0 %}
-                    <h2 class="text-2xl font-semibold text-slate-900 leading-snug mb-4">
-                        共发现 {{ items|length }} 项合规关注点，其中
-                        {% if risk_stats['高风险'] > 0 %}<span class="text-red-600">{{ risk_stats['高风险'] }} 项高风险</span>需优先处理。{% else %}
-                            {% if risk_stats['中风险'] > 0 %}<span class="text-slate-800">{{ risk_stats['中风险'] }} 项中风险</span>建议尽快补齐。{% else %}均为建议优化项，整体披露较完整。{% endif %}
-                        {% endif %}
-                    </h2>
-                    <div class="flex items-center gap-6">
+    <!-- Content -->
+    <div class="content">
+
+        <!-- Overview -->
+        <section id="overview">
+            <div class="section-head">
+                <h2 class="section-title">审查概览</h2>
+            </div>
+            <div class="overview-grid">
+                <div class="ov-card">
+                    <p class="ov-label">审查结论</p>
+                    <p class="ov-headline">
+                        共发现 <span class="hl-accent">{{ items|length }}</span> 项合规关注点{% if risk_stats['高风险'] > 0 %}，其中 <span class="hl-red">{{ risk_stats['高风险'] }} 项高风险</span>需优先处理{% endif %}
+                    </p>
+                    <div class="risk-tally">
                         {% if risk_stats['高风险'] > 0 %}
-                        <div class="text-center">
-                            <p class="text-3xl font-bold text-red-600">{{ risk_stats['高风险'] }}</p>
-                            <p class="text-xs text-slate-500 mt-0.5">高风险</p>
+                        <div class="tally-item">
+                            <div class="tally-num red">{{ risk_stats['高风险'] }}</div>
+                            <div class="tally-label"><span class="tally-dot" style="background:var(--red)"></span>高风险</div>
                         </div>
                         {% endif %}
                         {% if risk_stats['中风险'] > 0 %}
-                        <div class="text-center">
-                            <p class="text-3xl font-bold text-slate-800">{{ risk_stats['中风险'] }}</p>
-                            <p class="text-xs text-slate-500 mt-0.5">中风险</p>
+                        <div class="tally-item">
+                            <div class="tally-num orange">{{ risk_stats['中风险'] }}</div>
+                            <div class="tally-label"><span class="tally-dot" style="background:var(--orange)"></span>中风险</div>
                         </div>
                         {% endif %}
                         {% if risk_stats['建议优化'] > 0 %}
-                        <div class="text-center">
-                            <p class="text-3xl font-bold text-primary-600">{{ risk_stats['建议优化'] }}</p>
-                            <p class="text-xs text-slate-500 mt-0.5">建议优化</p>
+                        <div class="tally-item">
+                            <div class="tally-num blue">{{ risk_stats['建议优化'] }}</div>
+                            <div class="tally-label"><span class="tally-dot" style="background:var(--blue)"></span>建议优化</div>
                         </div>
                         {% endif %}
                     </div>
                     {% if report.auto_recheck_triggered %}
-                    <div class="mt-4 inline-flex items-center gap-2 text-sm text-slate-700 bg-slate-100 border border-slate-200 rounded-lg px-3 py-1.5">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        <span>已触发自动复核</span>
+                    <div class="notice-bar" style="margin-top:16px">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        已触发自动复核
                     </div>
                     {% endif %}
                     {% if report.local_regulation_db and report.local_regulation_db.enabled %}
-                    <div class="mt-3 text-xs text-slate-500">
-                        法规库增强已生效：{{ report.local_regulation_db.matched_items }} 项已命中条款支撑，{{ report.local_regulation_db.unmatched_items }} 项暂未命中。
+                    <div class="notice-bar" style="margin-top:8px">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        法规库增强已生效：{{ report.local_regulation_db.matched_items }} 项命中，{{ report.local_regulation_db.unmatched_items }} 项暂未命中
                     </div>
                     {% endif %}
                 </div>
-                <div class="md:col-span-2 card p-6 bg-slate-50/60">
-                    <p class="text-xs text-slate-500 tracking-wider uppercase mb-3 font-medium">优先行动</p>
+                <div class="ov-card">
+                    <p class="ov-label">优先行动</p>
                     {% if remediation and remediation.tasks %}
-                        {% set top_task = remediation.tasks | selectattr('priority','equalto','P1') | first %}
-                        {% if top_task %}
-                        <div class="mb-3">
-                            <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase border border-red-300 bg-red-50 text-red-700 rounded">P1</span>
-                            <h3 class="font-medium text-slate-900 text-sm mt-1.5">{{ top_task.title }}</h3>
-                            <p class="text-xs text-slate-600 mt-1 line-clamp-2">{{ top_task.objective }}</p>
-                        </div>
-                        <a href="#tasks" class="inline-flex items-center text-sm text-primary-600 hover:text-primary-700 font-medium">查看全部整改任务 →</a>
-                        {% else %}
-                            {% set top_task = remediation.tasks | first %}
-                            <div class="mb-3">
-                                <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase border border-slate-300 bg-slate-100 text-slate-700 rounded">{{ top_task.priority }}</span>
-                                <h3 class="font-medium text-slate-900 text-sm mt-1.5">{{ top_task.title }}</h3>
-                                <p class="text-xs text-slate-600 mt-1 line-clamp-2">{{ top_task.objective }}</p>
-                            </div>
-                            <a href="#tasks" class="inline-flex items-center text-sm text-primary-600 hover:text-primary-700 font-medium">查看全部整改任务 →</a>
+                        {% set top = remediation.tasks | selectattr('priority','equalto','P1') | first %}
+                        {% if not top %}{% set top = remediation.tasks | first %}{% endif %}
+                        {% if top %}
+                        <div class="priority-badge priority-{{ top.priority | lower }}">{{ top.priority }}</div>
+                        <p class="pa-title">{{ top.title }}</p>
+                        <p class="pa-objective">{{ top.objective }}</p>
+                        <a href="#tasks" class="pa-link">
+                            查看全部 {{ remediation.tasks|length }} 项整改任务
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </a>
                         {% endif %}
                     {% else %}
-                        <p class="text-sm text-slate-500">暂无需要立即处理的整改任务。</p>
+                        <p style="font-size:15px;color:var(--green);font-weight:500">✓ 暂无需立即处理的整改任务</p>
                     {% endif %}
                 </div>
             </div>
-
-            <!-- Review paths (compressed) -->
-            <div class="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                <span>审查路径：</span>
-                {% for path in report.selected_review_paths %}
-                <span class="px-2 py-0.5 border border-slate-200 bg-white text-slate-600 rounded">{{ path.name if path.name is defined else path }}</span>
-                {% endfor %}
-            </div>
         </section>
 
-        <!-- Risk Details (Reconstructed) -->
-        <section id="risks" class="mb-10">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-slate-900">风险详情</h2>
-                <span class="text-xs text-slate-500">{{ items|length }} 项发现</span>
+        <!-- Risk Details -->
+        <section id="risks">
+            <div class="section-head">
+                <h2 class="section-title">风险详情</h2>
+                <span class="section-meta">{{ items|length }} 项发现</span>
             </div>
-            <div class="space-y-4">
+            <div class="risk-list">
                 {% for item in items %}
-                <article class="card p-0 overflow-hidden
-                    {% if item.risk_level == '高风险' %}risk-bar-high{% elif item.risk_level == '中风险' %}risk-bar-medium{% elif item.risk_level == '建议优化' %}risk-bar-low{% else %}risk-bar-none{% endif %}">
-                    <div class="p-5 md:p-6">
-                        <div class="grid md:grid-cols-12 gap-5 md:gap-6">
-                            <!-- Left: Risk info -->
-                            <div class="md:col-span-5">
-                                <div class="flex items-start gap-2 mb-2">
-                                    <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide rounded
-                                        {% if item.risk_level == '高风险' %}badge-high{% elif item.risk_level == '中风险' %}badge-medium{% elif item.risk_level == '建议优化' %}badge-low{% else %}badge-none{% endif %}">
-                                        {{ item.risk_level }}
-                                    </span>
-                                    {% if item.theme_name %}
-                                    <span class="text-[11px] text-slate-500 px-1.5 py-0.5 border border-slate-200 rounded">{{ item.theme_name }}</span>
-                                    {% endif %}
-                                </div>
-                                <h3 class="font-semibold text-slate-900 text-base mb-2">{{ item.risk_point }}</h3>
-                                <div class="space-y-2 text-sm">
-                                    <div>
-                                        <p class="text-[11px] text-slate-500 mb-1 font-medium">问题内容</p>
-                                        <div class="space-y-1.5">
-                                            {% if item.source_sections %}
-                                                {% for section in item.source_sections[:2] %}
-                                                <blockquote class="text-slate-700 border-l-2 border-primary-500 pl-2.5 py-0.5 text-xs bg-white rounded-r">{{ section.snippet }}</blockquote>
-                                                {% endfor %}
-                                            {% elif item.evidence %}
-                                                {% for ev in item.evidence[:2] %}
-                                                <blockquote class="text-slate-700 border-l-2 border-primary-500 pl-2.5 py-0.5 text-xs bg-white rounded-r">{{ ev }}</blockquote>
-                                                {% endfor %}
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p class="text-[11px] text-slate-500 mb-1 font-medium">风险说明</p>
-                                        <p class="text-slate-700 leading-relaxed">
-                                            {% if item.missing_groups %}
-                                                该处未明确 {{ item.missing_groups | join('、') }}，存在 {{ item.risk_point }}。
-                                            {% elif item.ambiguity_hits %}
-                                                该处存在“{{ item.ambiguity_hits | join('、') }}”等模糊表述，存在 {{ item.risk_point }}。
-                                            {% else %}
-                                                该处存在 {{ item.risk_point }}。
-                                            {% endif %}
-                                        </p>
-                                    </div>
-                                </div>
+                <article class="risk-item lvl-{% if item.risk_level == '高风险' %}high{% elif item.risk_level == '中风险' %}medium{% elif item.risk_level == '建议优化' %}low{% else %}none{% endif %}">
+                    <div class="risk-body">
+                        <div class="risk-col-l">
+                            <div class="risk-meta">
+                                <span class="risk-badge rb-{% if item.risk_level == '高风险' %}high{% elif item.risk_level == '中风险' %}medium{% elif item.risk_level == '建议优化' %}low{% else %}none{% endif %}">{{ item.risk_level }}</span>
+                                {% if item.theme_name %}<span class="theme-tag">{{ item.theme_name }}</span>{% endif %}
                             </div>
-                            <!-- Right: Action suggestion (highlighted) -->
-                            <div class="md:col-span-7 bg-slate-50 p-4 rounded-lg border border-slate-100">
-                                <p class="text-[11px] text-slate-500 tracking-wider uppercase mb-2 font-medium">修改建议</p>
-                                <p class="text-sm text-slate-800 leading-relaxed">{{ item.suggestion }}</p>
+                            <p class="risk-point">{{ item.risk_point }}</p>
+                            {% if item.source_sections or item.evidence %}
+                            <p class="field-head">原文摘录</p>
+                            {% if item.source_sections %}
+                                {% for s in item.source_sections[:2] %}
+                                <blockquote class="risk-quote">{{ s.snippet }}</blockquote>
+                                {% endfor %}
+                            {% elif item.evidence %}
+                                {% for ev in item.evidence[:2] %}
+                                <blockquote class="risk-quote">{{ ev }}</blockquote>
+                                {% endfor %}
+                            {% endif %}
+                            {% endif %}
+                        </div>
+                        <div class="risk-col-r">
+                            <div class="analysis-box">
+                                <p class="analysis-head">风险分析</p>
+                                <p class="analysis-text">
+                                    {% if item.missing_groups %}
+                                        该处未明确 <strong>{{ item.missing_groups | join('、') }}</strong>，存在 {{ item.risk_point }}。
+                                    {% elif item.ambiguity_hits %}
+                                        该处存在 <strong>「{{ item.ambiguity_hits | join('、') }}」</strong> 等模糊表述，存在 {{ item.risk_point }}。
+                                    {% else %}
+                                        该处存在 {{ item.risk_point }}。
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="suggestion-box">
+                                <p class="suggestion-head">修改建议</p>
+                                <p class="suggestion-text">{{ item.suggestion }}</p>
                             </div>
                         </div>
-
-                        <!-- Foldable details -->
-                        <div class="mt-4 pt-4 border-t border-slate-100">
-                            <button class="fold-toggle text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors" data-target="fold-{{ loop.index }}">
-                                <svg class="w-3.5 h-3.5 fold-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                <span>查看法规依据与定位详情</span>
-                            </button>
-                            <div class="fold-content mt-3" id="fold-{{ loop.index }}">
-                                <div class="grid md:grid-cols-2 gap-4 text-sm">
-                                    {% if item.legal_basis %}
-                                    <div>
-                                        <p class="text-[11px] text-slate-500 mb-1 font-medium">法规依据</p>
-                                        <p class="text-slate-700">{{ item.legal_basis }}</p>
-                                        {% if item.legal_basis_detail %}
-                                        <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ item.legal_basis_detail }}</p>
-                                        {% endif %}
-                                    </div>
-                                    {% endif %}
-                                    {% if item.supporting_regulations %}
-                                    <div class="md:col-span-2">
-                                        <p class="text-[11px] text-slate-500 mb-2 font-medium">补充规范索引</p>
-                                        <div class="space-y-2">
-                                            {% for reg in item.supporting_regulations %}
-                                            <div class="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                                                <div class="flex flex-wrap items-center gap-2 text-xs mb-1">
-                                                    {% if reg.standard_code %}
-                                                    <span class="px-1.5 py-0.5 border border-slate-200 bg-slate-50 text-slate-600 rounded">{{ reg.standard_code }}</span>
-                                                    {% endif %}
-                                                    <span class="font-medium text-slate-800">{{ reg.title }}</span>
-                                                </div>
-                                                <p class="text-[11px] text-slate-500">
-                                                    {{ reg.effect_level or reg.doc_category }}
-                                                    {% if reg.clause_references %} · 条款：{{ reg.clause_references | join('、') }}{% endif %}
-                                                    {% if reg.match_keywords %} · 命中词：{{ reg.match_keywords | join('、') }}{% endif %}
-                                                </p>
-                                                {% if reg.snippet %}
-                                                <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ reg.snippet }}</p>
-                                                {% endif %}
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if item.evidence %}
-                                    <div>
-                                        <p class="text-[11px] text-slate-500 mb-1 font-medium">补充证据片段</p>
-                                        <div class="space-y-1.5">
-                                            {% for ev in item.evidence %}
-                                            <blockquote class="text-slate-600 italic border-l-2 border-primary-500 pl-2.5 py-0.5 text-xs bg-white rounded-r">"{{ ev }}"</blockquote>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    {% if item.auto_recheck %}
-                                    <div class="md:col-span-2 flex items-center gap-2 text-slate-700 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                        <span class="font-medium">{{ item.auto_recheck_status or '已触发自动复核' }}</span>
-                                    </div>
-                                    {% endif %}
-                                    {% if item.reason %}
-                                    <div class="md:col-span-2">
-                                        <p class="text-[11px] text-slate-500 mb-1 font-medium">系统判断详情</p>
-                                        <p class="text-xs text-slate-600 leading-relaxed">{{ item.reason }}</p>
-                                    </div>
-                                    {% endif %}
+                    </div>
+                    <div class="fold-row">
+                        <button class="fold-toggle" data-target="fold-{{ loop.index }}">
+                            <svg class="fold-icon" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            法规依据与定位详情
+                        </button>
+                        <div class="fold-content" id="fold-{{ loop.index }}">
+                            <div class="detail-grid">
+                                {% if item.legal_basis %}
+                                <div class="detail-block">
+                                    <p class="detail-label">法规依据</p>
+                                    <p class="detail-text" style="font-weight:600;color:var(--text-primary);margin-bottom:6px">{{ item.legal_basis }}</p>
+                                    {% if item.legal_basis_detail %}<p class="detail-text">{{ item.legal_basis_detail }}</p>{% endif %}
                                 </div>
+                                {% endif %}
+                                {% if item.supporting_regulations %}
+                                <div class="detail-block full">
+                                    <p class="detail-label">补充规范索引</p>
+                                    {% for reg in item.supporting_regulations %}
+                                    <div class="reg-card">
+                                        {% if reg.standard_code %}<span class="reg-code">{{ reg.standard_code }}</span>{% endif %}
+                                        <p class="reg-title">{{ reg.title }}</p>
+                                        <p class="reg-meta">
+                                            {{ reg.effect_level or reg.doc_category }}
+                                            {% if reg.clause_references %} · 条款：{{ reg.clause_references | join('、') }}{% endif %}
+                                            {% if reg.match_keywords %} · 命中词：{{ reg.match_keywords | join('、') }}{% endif %}
+                                        </p>
+                                        {% if reg.snippet %}<p class="reg-snippet">{{ reg.snippet }}</p>{% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                {% if item.evidence %}
+                                <div class="detail-block full">
+                                    <p class="detail-label">补充证据片段</p>
+                                    {% for ev in item.evidence %}
+                                    <blockquote class="risk-quote">{{ ev }}</blockquote>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                {% if item.auto_recheck %}
+                                <div class="detail-block full">
+                                    <div class="recheck-note">
+                                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                        {{ item.auto_recheck_status or '已触发自动复核' }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if item.reason %}
+                                <div class="detail-block full">
+                                    <p class="detail-label">系统判断详情</p>
+                                    <p class="detail-text">{{ item.reason }}</p>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -329,124 +1039,113 @@
             </div>
         </section>
 
-        <!-- Risk Clusters -->
+        <!-- Clusters -->
         {% if report.risk_clusters %}
-        <section id="clusters" class="mb-10">
-            <h2 class="text-xl font-semibold text-slate-900 mb-4">风险聚类</h2>
-            <div class="grid md:grid-cols-2 gap-4">
+        <section id="clusters">
+            <div class="section-head">
+                <h2 class="section-title">风险聚类</h2>
+            </div>
+            <div class="cluster-grid">
                 {% for cluster in report.risk_clusters %}
-                <div class="card p-4 flex items-center justify-between">
+                <div class="cluster-card">
                     <div>
-                        <h3 class="font-semibold text-slate-900 text-sm">{{ cluster.theme_name }}</h3>
-                        <div class="flex items-center gap-2 mt-1.5 text-xs">
-                            {% if cluster.high_risk_count > 0 %}<span class="px-1.5 py-0.5 border border-red-200 bg-red-50 text-red-700 rounded">{{ cluster.high_risk_count }} 高</span>{% endif %}
-                            {% if cluster.medium_risk_count > 0 %}<span class="px-1.5 py-0.5 border border-indigo-200 bg-indigo-50 text-indigo-700 rounded">{{ cluster.medium_risk_count }} 中</span>{% endif %}
-                            {% if cluster.advisory_count > 0 %}<span class="px-1.5 py-0.5 border border-blue-200 bg-blue-50 text-blue-700 rounded">{{ cluster.advisory_count }} 建议</span>{% endif %}
+                        <p class="cluster-name">{{ cluster.theme_name }}</p>
+                        <div class="cluster-tags">
+                            {% if cluster.high_risk_count > 0 %}<span class="risk-badge rb-high">{{ cluster.high_risk_count }} 高</span>{% endif %}
+                            {% if cluster.medium_risk_count > 0 %}<span class="risk-badge rb-medium">{{ cluster.medium_risk_count }} 中</span>{% endif %}
+                            {% if cluster.advisory_count > 0 %}<span class="risk-badge rb-low">{{ cluster.advisory_count }} 建议</span>{% endif %}
                         </div>
                     </div>
-                    <span class="text-2xl font-bold text-slate-800">{{ cluster.item_count }}</span>
+                    <div class="cluster-count">{{ cluster.item_count }}</div>
                 </div>
                 {% endfor %}
             </div>
         </section>
         {% endif %}
 
-        <!-- Remediation Tasks -->
+        <!-- Tasks -->
         {% if remediation and remediation.tasks %}
-        <section id="tasks" class="mb-10">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-slate-900">整改任务</h2>
-                <div class="flex items-center gap-2 text-xs">
-                    <span class="px-1.5 py-0.5 border border-red-200 bg-red-50 text-red-700 font-medium rounded">P1 {{ remediation.priority_counts.P1 }}</span>
-                    <span class="px-1.5 py-0.5 border border-indigo-200 bg-indigo-50 text-indigo-700 font-medium rounded">P2 {{ remediation.priority_counts.P2 }}</span>
-                    <span class="px-1.5 py-0.5 border border-slate-200 bg-white text-slate-700 font-medium rounded">P3 {{ remediation.priority_counts.P3 }}</span>
+        <section id="tasks">
+            <div class="section-head">
+                <h2 class="section-title">整改任务</h2>
+                <div style="display:flex;gap:10px;align-items:center">
+                    <span class="risk-badge rb-high">P1 {{ remediation.priority_counts.P1 }}</span>
+                    <span class="risk-badge rb-medium">P2 {{ remediation.priority_counts.P2 }}</span>
+                    <span class="risk-badge" style="background:var(--bg-subtle);color:var(--text-muted);border:1px solid var(--border)">P3 {{ remediation.priority_counts.P3 }}</span>
                 </div>
             </div>
-            <div class="space-y-3">
+            <div class="task-list">
                 {% for t in remediation.tasks %}
-                <div class="card p-4">
-                    <div class="flex items-start justify-between gap-3 mb-1">
-                        <div class="flex items-center gap-2">
-                            <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase border rounded
-                                {% if t.priority == 'P1' %}border-red-200 bg-red-50 text-red-700{% elif t.priority == 'P2' %}border-indigo-200 bg-indigo-50 text-indigo-700{% else %}border-slate-200 bg-white text-slate-700{% endif %}">{{ t.priority }}</span>
-                            <h3 class="font-medium text-slate-900 text-sm">{{ t.title }}</h3>
+                <div class="task-card">
+                    <div class="task-meta">
+                        <div style="display:flex;align-items:center;gap:12px">
+                            <span class="priority-badge priority-{{ t.priority | lower }}">{{ t.priority }}</span>
+                            <p class="task-title">{{ t.title }}</p>
                         </div>
-                        <span class="text-xs text-slate-500">{{ t.owner_hint }}</span>
+                        {% if t.owner_hint %}<span class="task-owner">{{ t.owner_hint }}</span>{% endif %}
                     </div>
-                    <p class="text-sm text-slate-600">{{ t.objective }}</p>
+                    <p class="task-obj">{{ t.objective }}</p>
                 </div>
                 {% endfor %}
             </div>
         </section>
         {% endif %}
 
-        <!-- Evidence Checklist -->
+        <!-- Evidence -->
         {% if evidence and evidence.checklist %}
-        <section id="evidence" class="mb-10">
-            <h2 class="text-xl font-semibold text-slate-900 mb-4">证据清单</h2>
-            <div class="card overflow-hidden">
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-50 text-slate-700 text-xs border-b border-slate-200">
-                        <tr>
-                            <th class="text-left font-medium px-4 py-2">风险点</th>
-                            <th class="text-left font-medium px-4 py-2">所需材料</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        {% for row in evidence.checklist %}
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-4 py-3 align-top w-1/3">
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded
-                                        {% if row.risk_level == '高风险' %}badge-high{% elif row.risk_level == '中风险' %}badge-medium{% else %}badge-low{% endif %}">{{ row.risk_level }}</span>
-                                    <span class="text-slate-800 text-sm">{{ row.risk_point }}</span>
-                                </div>
-                                <p class="text-[11px] text-slate-400 mt-1">{{ row.owner_hint }}</p>
-                            </td>
-                            <td class="px-4 py-3 align-top text-slate-600 text-sm">
-                                <ul class="list-disc list-inside space-y-0.5">
-                                    {% for ev_item in row.evidence_items %}<li>{{ ev_item }}</li>{% endfor %}
-                                </ul>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <section id="evidence">
+            <div class="section-head">
+                <h2 class="section-title">证据清单</h2>
             </div>
+            <table class="evidence-table">
+                <thead>
+                    <tr>
+                        <th style="width:38%">风险点</th>
+                        <th>所需证明材料</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in evidence.checklist %}
+                    <tr>
+                        <td>
+                            <span class="risk-badge rb-{% if row.risk_level == '高风险' %}high{% elif row.risk_level == '中风险' %}medium{% else %}low{% endif %}">{{ row.risk_level }}</span>
+                            <p class="ev-point">{{ row.risk_point }}</p>
+                            {% if row.owner_hint %}<p class="ev-hint">{{ row.owner_hint }}</p>{% endif %}
+                        </td>
+                        <td>
+                            <ul class="ev-items">
+                                {% for ei in row.evidence_items %}<li>{{ ei }}</li>{% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </section>
         {% endif %}
 
-        <!-- Special Review Packs -->
+        <!-- Special Packs -->
         {% if (sdk_pack and sdk_pack.enabled) or (cross_border_pack and cross_border_pack.enabled) or (privacy_pack and privacy_pack.enabled) %}
-        <section id="packs" class="mb-10">
-            <h2 class="text-xl font-semibold text-slate-900 mb-4">专项审查包</h2>
-            <div class="card p-5">
-                <div class="flex items-center gap-6 border-b border-slate-200 mb-4" id="packTabs">
-                    {% if sdk_pack and sdk_pack.enabled %}
-                    <button class="pack-tab pb-2 text-sm tab-active" data-tab="sdk">SDK 与合作方</button>
-                    {% endif %}
-                    {% if cross_border_pack and cross_border_pack.enabled %}
-                    <button class="pack-tab pb-2 text-sm {% if not (sdk_pack and sdk_pack.enabled) %}tab-active{% else %}tab-inactive{% endif %}" data-tab="cross">数据出境</button>
-                    {% endif %}
-                    {% if privacy_pack and privacy_pack.enabled %}
-                    <button class="pack-tab pb-2 text-sm {% if not ((sdk_pack and sdk_pack.enabled) or (cross_border_pack and cross_border_pack.enabled)) %}tab-active{% else %}tab-inactive{% endif %}" data-tab="privacy">隐私文档整改</button>
-                    {% endif %}
+        <section id="packs">
+            <div class="section-head">
+                <h2 class="section-title">专项审查包</h2>
+            </div>
+            <div class="pack-container">
+                <div class="pack-tabs" id="packTabs">
+                    {% if sdk_pack and sdk_pack.enabled %}<button class="pack-tab active" data-tab="sdk">SDK 与合作方</button>{% endif %}
+                    {% if cross_border_pack and cross_border_pack.enabled %}<button class="pack-tab {% if not (sdk_pack and sdk_pack.enabled) %}active{% endif %}" data-tab="cross">数据出境</button>{% endif %}
+                    {% if privacy_pack and privacy_pack.enabled %}<button class="pack-tab {% if not ((sdk_pack and sdk_pack.enabled) or (cross_border_pack and cross_border_pack.enabled)) %}active{% endif %}" data-tab="privacy">隐私文档整改</button>{% endif %}
                 </div>
                 {% for pack_key, pack_data in [('sdk', sdk_pack), ('cross', cross_border_pack), ('privacy', privacy_pack)] %}
                     {% if pack_data and pack_data.enabled %}
-                    <div id="panel-{{ pack_key }}" class="pack-panel {% if loop.first and pack_data.enabled %}block{% else %}hidden{% endif %}">
-                        <p class="text-xs text-slate-500 mb-3">命中场景：{{ pack_data.scenario_name }}</p>
-                        <div class="grid md:grid-cols-2 gap-4">
+                    <div id="panel-{{ pack_key }}" class="pack-panel {% if loop.first and pack_data.enabled %}block{% else %}hidden{% endif %}" style="{% if not (loop.first and pack_data.enabled) %}display:none{% endif %}">
+                        <p class="pack-scenario">命中场景：{{ pack_data.scenario_name }}</p>
+                        <div class="pack-grid">
                             {% for section in pack_data.sections %}
-                            <div class="border border-slate-200 p-4 bg-white rounded-lg">
-                                <h3 class="font-semibold text-slate-900 text-sm mb-2">{{ section.title }}</h3>
-                                <ul class="space-y-1.5">
-                                    {% for req in section.required_items %}
-                                    <li class="flex items-start gap-2 text-sm text-slate-600">
-                                        <span class="w-1 h-1 rounded-full bg-primary-500 mt-2 shrink-0"></span>
-                                        <span>{{ req }}</span>
-                                    </li>
-                                    {% endfor %}
+                            <div class="pack-section">
+                                <p class="pack-section-title">{{ section.title }}</p>
+                                <ul class="pack-items">
+                                    {% for req in section.required_items %}<li>{{ req }}</li>{% endfor %}
                                 </ul>
                             </div>
                             {% endfor %}
@@ -458,19 +1157,26 @@
         </section>
         {% endif %}
 
-        <!-- Bottom downloads (mobile only, desktop has side nav) -->
-        <div class="md:hidden flex flex-col sm:flex-row gap-3 mt-8">
-            <a href="/api/download/{{ task.id }}/report" class="inline-flex items-center justify-center gap-2 px-5 py-3 border border-slate-200 bg-white text-slate-700 text-sm rounded-lg">下载完整报告 (JSON)</a>
-            <a href="/api/download/{{ task.id }}/report_md" class="inline-flex items-center justify-center gap-2 px-5 py-3 border border-slate-200 bg-white text-slate-700 text-sm rounded-lg">下载完整报告 (Markdown)</a>
-            <a href="/api/download/{{ task.id }}/remediation" class="inline-flex items-center justify-center gap-2 px-5 py-3 text-white text-sm font-medium rounded-lg btn-primary">下载整改任务清单</a>
+        <!-- Mobile downloads -->
+        <div style="display:none;" class="mobile-dl">
+            <p style="font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px">下载报告</p>
+            <a href="/api/download/{{ task.id }}/report" style="display:block;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);text-decoration:none">完整报告 JSON</a>
+            <a href="/api/download/{{ task.id }}/report_md" style="display:block;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);text-decoration:none">完整报告 Markdown</a>
+            <a href="/api/download/{{ task.id }}/remediation" style="display:block;padding:14px 0;font-size:14px;color:var(--text-secondary);text-decoration:none">整改任务清单</a>
         </div>
-    </main>
-</div>
+        <style>@media(max-width:900px){.mobile-dl{display:block!important;margin-top:32px}}</style>
+
+    </div><!-- /content -->
+</div><!-- /page-wrap -->
 
 {% endif %}
 
-<footer class="max-w-6xl mx-auto px-6 py-8 text-center">
-    <p class="text-sm text-slate-400">数据合规智能审查系统 · 辅助决策，不替代专业法律判断</p>
+<!-- Footer -->
+<footer>
+    <div class="footer-inner">
+        <p class="footer-note">ComplianceAI — 辅助决策，不替代专业法律判断</p>
+        <p class="footer-note">个保法 · 网安法 · 数安法 · GDPR</p>
+    </div>
 </footer>
 
 <script>
@@ -479,37 +1185,35 @@
         btn.addEventListener('click', () => {
             const target = document.getElementById(btn.dataset.target);
             const icon = btn.querySelector('.fold-icon');
-            const isOpen = target.classList.contains('open');
-            target.classList.toggle('open', !isOpen);
-            icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+            const open = target.classList.toggle('open');
+            icon.style.transform = open ? 'rotate(180deg)' : '';
         });
     });
 
     // Pack tabs
-    const tabs = document.querySelectorAll('.pack-tab');
-    tabs.forEach(tab => {
+    document.querySelectorAll('.pack-tab').forEach(tab => {
         tab.addEventListener('click', () => {
-            const target = tab.dataset.tab;
-            tabs.forEach(t => { t.classList.remove('tab-active'); t.classList.add('tab-inactive'); });
-            tab.classList.remove('tab-inactive'); tab.classList.add('tab-active');
-            document.querySelectorAll('.pack-panel').forEach(p => p.classList.add('hidden'));
-            document.getElementById('panel-' + target).classList.remove('hidden');
+            document.querySelectorAll('.pack-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('.pack-panel').forEach(p => p.style.display = 'none');
+            const panel = document.getElementById('panel-' + tab.dataset.tab);
+            if (panel) panel.style.display = 'block';
         });
     });
 
-    // Active side nav on scroll
-    const sections = ['overview','risks','clusters','tasks','evidence','packs'];
-    const navLinks = document.querySelectorAll('.side-nav a');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                navLinks.forEach(link => link.classList.remove('active'));
-                const active = document.querySelector('.side-nav a[data-nav="' + entry.target.id + '"');
+    // Active sidebar nav
+    const navLinks = document.querySelectorAll('.side-nav-list a');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                navLinks.forEach(l => l.classList.remove('active'));
+                const active = document.querySelector(`.side-nav-list a[data-nav="${e.target.id}"]`);
                 if (active) active.classList.add('active');
             }
         });
-    }, { rootMargin: '-20% 0px -60% 0px' });
-    sections.forEach(id => {
+    }, { rootMargin: '-15% 0px -65% 0px' });
+
+    ['overview','risks','clusters','tasks','evidence','packs'].forEach(id => {
         const el = document.getElementById(id);
         if (el) observer.observe(el);
     });

@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-04-13
+
+### 14:26 CST — 你 — 前端输出页重构与首页体验优化
+- 将结果页 `result.html` 重构为与首页一致的 Plus Jakarta Sans + Inter 设计系统，统一配色与卡片质感。
+- 调整风险卡片两栏布局：左侧仅保留原文摘录，右侧放置「风险分析」与「修改建议」，解决修改建议框过度撑大问题。
+- 放大审查结论、优先行动、风险分析、修改建议等区块标题字号，提升可读性。
+- 删除结果页中的「审查路径」展示块，减少信息噪音。
+- 修复证据清单中风险等级标签换行问题。
+- 首页 `index.html` 新增上传文件后自动填充文档名称功能。
+- 补充 `requirements.txt` 中缺失的 `pypdf` 依赖，修复 PDF 上传预处理报错。
+- **文件改动**：`data-compliance-web/templates/result.html`、`data-compliance-web/templates/index.html`、`data-compliance-web/requirements.txt`
+
 ## 2026-04-11
 
 ### 21:10 CST — 向阳 — 修复下载整改清单失败，并继续压缩报告噪音

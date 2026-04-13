@@ -410,6 +410,23 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/preview/a')
+def preview_a():
+    return render_template('preview_A_dark.html')
+
+@app.route('/preview/b')
+def preview_b():
+    return render_template('preview_B_modern.html')
+
+@app.route('/preview/c')
+def preview_c():
+    return render_template('preview_C_warm.html')
+
+@app.route('/preview')
+def preview_selector():
+    return render_template('preview_selector.html')
+
+
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     """处理文件上传或文本输入"""

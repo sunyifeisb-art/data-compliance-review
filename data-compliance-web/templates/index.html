@@ -4,306 +4,649 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据合规智能审查系统</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: {
-                            50: '#f0f4ff',
-                            100: '#e0eaff',
-                            500: '#3b66f5',
-                            600: '#2549d1',
-                            700: '#1a37ab',
-                            900: '#0f1f5e',
-                        },
-                        risk: {
-                            high: '#ef4444',
-                            medium: '#6366f1',
-                            low: '#3b82f6',
-                            none: '#22c55e',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { background: #f6f7fb; }
-        .glass-card {
-            background: rgba(255,255,255,0.98);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(226,232,240,0.8);
+        :root {
+            --bg: #ffffff;
+            --bg-subtle: #f8fafc;
+            --bg-elevated: #ffffff;
+            --accent: #4f46e5;
+            --accent-light: #e0e7ff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 20px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background: var(--bg-subtle);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        header {
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--text-primary);
+        }
+        .logo span { color: var(--accent); }
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+        .hero-content h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: clamp(36px, 4vw, 52px);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1.5px;
+            margin-bottom: 24px;
+        }
+        .hero-content p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 40px;
+        }
+        .upload-card {
+            background: var(--bg-elevated);
+            border-radius: 24px;
+            padding: 48px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
         }
         .upload-zone {
-            border: 2px dashed #cbd5e1;
-            background: #f8fafc;
-            transition: all 0.2s ease;
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 48px 32px;
+            text-align: center;
+            background: var(--bg-subtle);
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
         .upload-zone:hover, .upload-zone.drag-active {
-            border-color: #3b66f5;
-            background: #f0f4ff;
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+        .upload-icon {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 24px;
+            background: var(--bg);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: var(--shadow);
+        }
+        .upload-zone h3 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .upload-zone p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 24px;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #3b66f5 0%, #2549d1 100%);
-            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
         }
         .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 20px -4px rgba(59,102,245,0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .features-bar {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px 80px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 24px;
+            background: var(--bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+        .feature-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--accent-light);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .feature-text h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .feature-text p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        /* File card */
+        .file-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px;
+            background: var(--bg-subtle);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+        .file-card-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .file-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+        .file-size { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .file-remove {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            transition: color 0.15s;
+            font-size: 18px;
+        }
+        .file-remove:hover { color: #ef4444; }
+        /* Text input */
+        .text-input-area {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-subtle);
+            font-size: 14px;
+            color: var(--text-primary);
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .text-input-area:focus {
+            border-color: var(--accent);
+        }
+        .text-input-area::placeholder { color: var(--text-muted); }
+        .or-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .or-divider::before, .or-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        /* Modal */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            backdrop-filter: blur(4px);
+        }
+        .modal-backdrop.show { display: flex; }
+        .modal-box {
+            background: var(--bg);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            padding: 32px;
+            box-shadow: var(--shadow-lg);
+        }
+        .modal-label {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .modal-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .modal-message {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            min-height: 20px;
+        }
+        .progress-track {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            width: 100%;
+            overflow: hidden;
+            margin-bottom: 12px;
         }
         .progress-fill {
-            background: linear-gradient(90deg, #3b66f5, #60a5fa);
+            height: 100%;
+            background: var(--accent);
+            border-radius: 3px;
             transition: width 0.4s ease;
+        }
+        .progress-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .checkpoint-list {
+            margin-top: 20px;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+            max-height: 160px;
+            overflow-y: auto;
+        }
+        .checkpoint-entry {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 6px 0;
+        }
+        .checkpoint-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+        .checkpoint-dot.done { background: var(--accent); }
+        /* Error modal */
+        .modal-box.error { border-top: 4px solid #ef4444; }
+        .error-icon {
+            width: 48px;
+            height: 48px;
+            background: #fef2f2;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ef4444;
+            margin-bottom: 16px;
+            font-size: 24px;
+        }
+        .btn-close {
+            margin-top: 24px;
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .btn-close:hover { 
+            background: var(--text-primary); 
+            color: #fff; 
+            border-color: var(--text-primary); 
+        }
+        /* Field label */
+        .field-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .field-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--bg-subtle);
+            font-size: 14px;
+            color: var(--text-primary);
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 16px;
+        }
+        .field-input:focus {
+            border-color: var(--accent);
+        }
+        .field-input::placeholder { color: var(--text-muted); }
+        @media (max-width: 900px) {
+            .main { grid-template-columns: 1fr; gap: 48px; }
+            .features-bar { grid-template-columns: 1fr; }
+            .header-inner { padding: 0 24px; }
+            .main { padding: 48px 24px; }
+            .features-bar { padding: 0 24px 48px; }
         }
     </style>
 </head>
-<body class="font-sans text-slate-800 min-h-screen flex flex-col">
-
-<nav class="bg-white border-b border-slate-200 sticky top-0 z-40">
-    <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold text-sm">D</div>
-            <span class="font-semibold text-slate-900">数据合规审查</span>
+<body>
+    <header>
+        <div class="header-inner">
+            <div class="logo">Compliance<span>AI</span></div>
         </div>
-        <div class="text-xs text-slate-500">让法务与合规工作更高效</div>
-    </div>
-</nav>
-
-<main class="flex-1 flex items-center justify-center px-6 py-10">
-    <div class="w-full max-w-2xl">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-900 mb-2">智能合规审查</h1>
-            <p class="text-slate-500">上传隐私政策或数据处理协议，自动识别合规风险</p>
+    </header>
+    <main class="main">
+        <div class="hero-content">
+            <h1>让合规审查<br>像呼吸一样自然</h1>
+            <p>AI 驱动的智能审查系统，自动识别法律文件中的合规风险，为您的业务保驾护航。</p>
         </div>
-
-        <div class="glass-card rounded-2xl shadow-sm p-8">
-            <div class="mb-5">
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">文档名称</label>
-                <input type="text" id="documentName" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors" placeholder="例如：某App隐私政策 V1.0">
+        <div class="upload-card">
+            <label class="field-label">文档名称</label>
+            <input type="text" id="documentName" class="field-input" placeholder="例：某 App 隐私政策 V2.1">
+            
+            <div id="dropZone" class="upload-zone">
+                <div class="upload-icon">📁</div>
+                <h3>上传文件开始审查</h3>
+                <p>支持 PDF、Word、TXT 格式</p>
+                <button class="btn-primary" id="selectFileBtn">选择文件</button>
+                <input type="file" id="fileInput" style="display:none" accept=".txt,.md,.doc,.docx,.pdf">
             </div>
-
-            <div id="dropZone" class="upload-zone rounded-xl p-10 text-center cursor-pointer mb-5">
-                <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                </div>
-                <p class="text-slate-700 font-medium text-sm mb-0.5">
-                    <span class="text-primary-600">点击选择文件</span> 或拖拽到此处
-                </p>
-                <p class="text-xs text-slate-400">支持 .txt, .md, .doc, .docx, .pdf</p>
-                <input type="file" id="fileInput" class="hidden" accept=".txt,.md,.doc,.docx,.pdf">
-            </div>
-
-            <div id="selectedFile" class="hidden mb-5 bg-slate-50 border border-slate-200 rounded-lg p-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            
+            <div id="selectedFile" style="display:none">
+                <div class="file-card">
+                    <div class="file-card-left">
+                        <div class="file-icon">📄</div>
+                        <div>
+                            <p id="fileName" class="file-name"></p>
+                            <p id="fileSize" class="file-size"></p>
+                        </div>
                     </div>
-                    <div>
-                        <p id="fileName" class="text-sm font-medium text-slate-800"></p>
-                        <p id="fileSize" class="text-xs text-slate-500"></p>
-                    </div>
+                    <button id="removeFile" class="file-remove">✕</button>
                 </div>
-                <button id="removeFile" class="text-slate-400 hover:text-slate-700 p-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
             </div>
-
-            <div class="mb-5">
-                <div class="flex items-center gap-3 text-xs text-slate-400 mb-2">
-                    <div class="h-px flex-1 bg-slate-200"></div>
-                    <span>或直接粘贴文本</span>
-                    <div class="h-px flex-1 bg-slate-200"></div>
-                </div>
-                <textarea id="textInput" rows="4" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors resize-none text-sm" placeholder="在此粘贴隐私政策或数据处理协议文本..."></textarea>
-            </div>
-
-            <button id="startBtn" class="btn-primary w-full text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                <span>开始审查</span>
+            
+            <div class="or-divider">或</div>
+            
+            <textarea id="textInput" class="text-input-area" rows="4" placeholder="直接粘贴隐私政策或数据处理协议全文..."></textarea>
+            
+            <button id="startBtn" class="btn-primary" style="width: 100%; margin-top: 16px;">
+                开始审查
             </button>
         </div>
-
-        <div class="grid grid-cols-3 gap-4 mt-6 text-center">
-            <div class="bg-white rounded-xl border border-slate-200 p-4">
-                <div class="w-8 h-8 mx-auto mb-2 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <p class="text-xs font-medium text-slate-700">法规对照</p>
-                <p class="text-[11px] text-slate-500 mt-0.5">自动映射个保法/GDPR</p>
-            </div>
-            <div class="bg-white rounded-xl border border-slate-200 p-4">
-                <div class="w-8 h-8 mx-auto mb-2 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                </div>
-                <p class="text-xs font-medium text-slate-700">风险识别</p>
-                <p class="text-[11px] text-slate-500 mt-0.5">10 条审查路径全覆盖</p>
-            </div>
-            <div class="bg-white rounded-xl border border-slate-200 p-4">
-                <div class="w-8 h-8 mx-auto mb-2 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                </div>
-                <p class="text-xs font-medium text-slate-700">整改建议</p>
-                <p class="text-[11px] text-slate-500 mt-0.5">生成 P1/P2/P3 任务清单</p>
+    </main>
+    <section class="features-bar">
+        <div class="feature-item">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-text">
+                <h4>秒级响应</h4>
+                <p>大模型驱动，瞬间完成分析</p>
             </div>
         </div>
-    </div>
-</main>
-
-<!-- Progress Modal -->
-<div id="progressModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full mx-4">
-        <div class="text-center mb-6">
-            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-primary-50 flex items-center justify-center">
-                <svg class="w-6 h-6 text-primary-600 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+        <div class="feature-item">
+            <div class="feature-icon">🎯</div>
+            <div class="feature-text">
+                <h4>精准定位</h4>
+                <p>智能标注风险条款位置</p>
             </div>
-            <h3 class="font-semibold text-slate-900">正在审查中</h3>
-            <p id="progressMessage" class="text-sm text-slate-500 mt-1">准备开始</p>
         </div>
-        <div class="mb-2">
-            <div class="flex justify-between text-xs text-slate-600 mb-1">
+        <div class="feature-item">
+            <div class="feature-icon">📋</div>
+            <div class="feature-text">
+                <h4>专业报告</h4>
+                <p>导出标准化审查文档</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Progress Modal -->
+    <div id="progressModal" class="modal-backdrop">
+        <div class="modal-box">
+            <p class="modal-label">正在处理</p>
+            <h3 class="modal-title">审查进行中…</h3>
+            <p id="progressMessage" class="modal-message">准备开始</p>
+            <div class="progress-track">
+                <div id="progressBar" class="progress-fill" style="width:0%"></div>
+            </div>
+            <div class="progress-meta">
                 <span>进度</span>
                 <span id="progressPercent">0%</span>
             </div>
-            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                <div id="progressBar" class="progress-fill h-2 rounded-full" style="width: 0%"></div>
-            </div>
+            <div id="checkpoints" class="checkpoint-list"></div>
         </div>
-        <div id="checkpoints" class="space-y-1 max-h-36 overflow-y-auto text-xs text-slate-500 mt-3"></div>
     </div>
-</div>
 
-<!-- Error Modal -->
-<div id="errorModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50">
-    <div class="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4">
-        <div class="text-center">
-            <div class="w-10 h-10 mx-auto mb-3 rounded-full bg-red-50 flex items-center justify-center text-red-500">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </div>
-            <h3 class="font-semibold text-slate-900 mb-1">出错了</h3>
-            <p id="errorMessage" class="text-sm text-slate-500 mb-5"></p>
-            <button id="closeError" class="w-full py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-medium">关闭</button>
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal-backdrop">
+        <div class="modal-box error">
+            <div class="error-icon">⚠️</div>
+            <p class="modal-label" style="color:#ef4444">提交失败</p>
+            <p id="errorMessage" class="modal-message" style="color:var(--text-primary);margin-bottom:0"></p>
+            <button id="closeError" class="btn-close">关闭</button>
         </div>
     </div>
-</div>
 
 <script>
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
+const selectFileBtn = document.getElementById('selectFileBtn');
 const selectedFile = document.getElementById('selectedFile');
-const fileName = document.getElementById('fileName');
-const fileSize = document.getElementById('fileSize');
+const fileNameEl = document.getElementById('fileName');
+const fileSizeEl = document.getElementById('fileSize');
 const removeFile = document.getElementById('removeFile');
 const textInput = document.getElementById('textInput');
-const documentName = document.getElementById('documentName');
+const docName = document.getElementById('documentName');
 const startBtn = document.getElementById('startBtn');
 const progressModal = document.getElementById('progressModal');
-const progressMessage = document.getElementById('progressMessage');
+const progressMsg = document.getElementById('progressMessage');
 const progressBar = document.getElementById('progressBar');
-const progressPercent = document.getElementById('progressPercent');
+const progressPct = document.getElementById('progressPercent');
 const checkpoints = document.getElementById('checkpoints');
 const errorModal = document.getElementById('errorModal');
-const errorMessage = document.getElementById('errorMessage');
+const errorMsg = document.getElementById('errorMessage');
 const closeError = document.getElementById('closeError');
 
 let currentFile = null;
 
+selectFileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fileInput.click();
+});
 dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); });
+dropZone.addEventListener('dragover', e => { 
+    e.preventDefault(); 
+    dropZone.classList.add('drag-active'); 
+});
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
-dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('drag-active'); if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]); });
-fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFileSelect(e.target.files[0]); });
+dropZone.addEventListener('drop', e => {
+    e.preventDefault(); 
+    dropZone.classList.remove('drag-active');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { 
+    if (e.target.files.length) handleFile(e.target.files[0]); 
+});
 
-function handleFileSelect(file) {
+function handleFile(file) {
     currentFile = file;
-    fileName.textContent = file.name;
-    fileSize.textContent = formatFileSize(file.size);
-    selectedFile.classList.remove('hidden');
+    fileNameEl.textContent = file.name;
+    fileSizeEl.textContent = fmtSize(file.size);
+    selectedFile.style.display = 'block';
+    dropZone.style.display = 'none';
     textInput.value = '';
+    if (!docName.value.trim()) {
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
+        docName.value = baseName;
+    }
 }
-
 removeFile.addEventListener('click', () => {
     currentFile = null;
     fileInput.value = '';
-    selectedFile.classList.add('hidden');
+    selectedFile.style.display = 'none';
+    dropZone.style.display = 'block';
 });
-
 textInput.addEventListener('input', () => {
-    if (textInput.value.trim()) { currentFile = null; selectedFile.classList.add('hidden'); }
-});
-
-function formatFileSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-}
-
-startBtn.addEventListener('click', async () => {
-    const name = documentName.value.trim();
-    if (!name) { showError('请输入文档名称'); return; }
-    const text = textInput.value.trim();
-    if (!currentFile && !text) { showError('请上传文件或输入文本'); return; }
-
-    const formData = new FormData();
-    formData.append('document_name', name);
-    if (currentFile) formData.append('file', currentFile);
-    else formData.append('input_text', text);
-
-    try {
-        progressModal.classList.remove('hidden');
-        updateProgress(0, '准备开始...');
-        const response = await fetch('/api/upload', { method: 'POST', body: formData });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error || '上传失败');
-        connectToProgress(result.task_id);
-    } catch (err) {
-        progressModal.classList.add('hidden');
-        showError(err.message);
+    if (textInput.value.trim()) { 
+        currentFile = null; 
+        selectedFile.style.display = 'none';
+        dropZone.style.display = 'block';
     }
 });
 
-function connectToProgress(taskId) {
-    const evtSource = new EventSource(`/api/progress/${taskId}`);
-    evtSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.error) { evtSource.close(); progressModal.classList.add('hidden'); showError(data.error); return; }
-        const progress = data.progress || {};
-        const step = progress.step || 0;
-        const total = progress.total_steps || 11;
-        updateProgress(Math.round((step / total) * 100), progress.message || '处理中...');
-        if (data.status === 'completed') {
-            evtSource.close();
-            setTimeout(() => { window.location.href = `/result/${taskId}`; }, 400);
-        } else if (data.status === 'failed') {
-            evtSource.close();
-            progressModal.classList.add('hidden');
-            showError(progress.message || '审查失败');
+function fmtSize(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+    return (b/1048576).toFixed(1) + ' MB';
+}
+
+startBtn.addEventListener('click', async () => {
+    const name = docName.value.trim();
+    if (!name) { showErr('请输入文档名称'); return; }
+    const text = textInput.value.trim();
+    if (!currentFile && !text) { showErr('请上传文件或输入文本'); return; }
+
+    const fd = new FormData();
+    fd.append('document_name', name);
+    if (currentFile) fd.append('file', currentFile);
+    else fd.append('input_text', text);
+
+    progressModal.classList.add('show');
+    setProgress(0, '准备开始…');
+
+    try {
+        const res = await fetch('/api/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '上传失败');
+        streamProgress(data.task_id);
+    } catch(e) {
+        progressModal.classList.remove('show');
+        showErr(e.message);
+    }
+});
+
+function streamProgress(taskId) {
+    const es = new EventSource(`/api/progress/${taskId}`);
+    es.onmessage = evt => {
+        const d = JSON.parse(evt.data);
+        if (d.error) { 
+            es.close(); 
+            progressModal.classList.remove('show'); 
+            showErr(d.error); 
+            return; 
+        }
+        const p = d.progress || {};
+        const pct = Math.round(((p.step||0)/(p.total_steps||11))*100);
+        setProgress(pct, p.message || '处理中…');
+        if (p.message) addCheckpoint(p.message);
+        if (d.status === 'completed') {
+            es.close();
+            setProgress(100, '审查完成，正在跳转…');
+            setTimeout(() => window.location.href = `/result/${taskId}`, 500);
+        } else if (d.status === 'failed') {
+            es.close(); 
+            progressModal.classList.remove('show');
+            showErr(p.message || '审查失败');
         }
     };
-    evtSource.onerror = () => { evtSource.close(); };
+    es.onerror = () => es.close();
 }
 
-function updateProgress(percent, message) {
-    progressBar.style.width = percent + '%';
-    progressPercent.textContent = percent + '%';
-    progressMessage.textContent = message;
+function setProgress(pct, msg) {
+    progressBar.style.width = pct + '%';
+    progressPct.textContent = pct + '%';
+    progressMsg.textContent = msg;
 }
-
-function showError(msg) {
-    errorMessage.textContent = msg;
-    errorModal.classList.remove('hidden');
+function addCheckpoint(msg) {
+    const el = document.createElement('div');
+    el.className = 'checkpoint-entry';
+    el.innerHTML = `<span class="checkpoint-dot done"></span><span>${msg}</span>`;
+    checkpoints.appendChild(el);
+    checkpoints.scrollTop = checkpoints.scrollHeight;
 }
-
-closeError.addEventListener('click', () => errorModal.classList.add('hidden'));
+function showErr(msg) {
+    errorMsg.textContent = msg;
+    errorModal.classList.add('show');
+}
+closeError.addEventListener('click', () => errorModal.classList.remove('show'));
 </script>
-
 </body>
 </html>
