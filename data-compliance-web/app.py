@@ -287,7 +287,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         subprocess.run([
             'python3', str(SCRIPTS_DIR / 'auto_recheck_report.py'),
             '--report', str(report_for_bundle),
-            '--output', str(report_for_bundle),
+            '--output', str(auto_rechecked_report),
             '--queue-output', str(auto_recheck_queue),
             '--cluster-output', str(risk_clusters)
         ], check=True, capture_output=True)
