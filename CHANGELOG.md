@@ -21,6 +21,15 @@
 - 更新 `data-compliance-web/README.md`：修正使用步骤、输出内容、功能特点、注意事项和技术说明，增加 PDF 支持、自动填充文档名、自定义 CSS 字体体系等描述。
 - **文件改动**：`README.md`、`data-compliance-web/README.md`
 
+### 15:02 CST — 你 — 接入 DeepSeek API，生成非模板化优化建议与改写示例
+- 新增 `data-compliance-web/scripts/enhance_suggestions_with_llm.py`：在审查流水线中调用 DeepSeek 大模型，对每个风险项生成更自然、贴合上下文的优化建议，并给出可直接参考的「改写示例」条款。
+- 直接替换原有 `suggestion` 为模型生成的优化建议，失败或无 API Key 时自动回退到规则模板建议，保证可用性。
+- 更新 `finding.schema.json` 与 `report.schema.json`：新增 `rewritten_clause`（改写示例）与 `llm_enhanced`（是否已成功增强）字段。
+- 更新 `run_review_pipeline.py`：在 `auto_recheck_report.py` 之后插入 LLM 增强步骤，输出 `07_report_llm_enhanced.json`。
+- 更新 `result.html`：右侧风险卡片新增绿色「改写示例」区块；更新 `render_risk_report.py`：Markdown 报告同步输出改写示例。
+- 补充 `requirements.txt`：新增 `openai>=1.30.0`（DeepSeek 兼容 OpenAI SDK）。
+- **文件改动**：`data-compliance-web/scripts/enhance_suggestions_with_llm.py`、`data-compliance-web/scripts/run_review_pipeline.py`、`data-compliance-web/scripts/render_risk_report.py`、`data-compliance-web/templates/result.html`、`data-compliance-web/requirements.txt`、`projects/data-compliance-ai-project-kit/config/finding.schema.json`、`projects/data-compliance-ai-project-kit/config/report.schema.json`
+
 ## 2026-04-11
 
 ### 21:10 CST — 向阳 — 修复下载整改清单失败，并继续压缩报告噪音

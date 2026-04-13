@@ -17,7 +17,8 @@
           "legal_basis": {"type": "string"},
           "reason": {"type": "string"},
           "suggestion": {"type": "string"},
-          "auto_recheck": {"type": "boolean"}
+          "auto_recheck": {"type": "boolean"},
+          "rewritten_clause": {"type": "string"}
         }
       }
     }

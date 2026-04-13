@@ -29,6 +29,8 @@
           "reason": {"type": "string"},
           "suggestion": {"type": "string"},
           "auto_recheck": {"type": "boolean"},
+          "rewritten_clause": {"type": "string"},
+          "llm_enhanced": {"type": "boolean"},
           "auto_recheck_status": {"type": "string"},
           "auto_recheck_notes": {"type": "string"},
           "auto_recheck_decision": {"type": "string"},

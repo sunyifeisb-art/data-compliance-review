@@ -41,6 +41,7 @@ def main() -> int:
     auto_rechecked_report = work_dir / '07_report_auto_rechecked.json'
     auto_recheck_queue = work_dir / '07_auto_recheck_queue.json'
     risk_clusters = work_dir / '07_risk_clusters.json'
+    llm_enhanced_report = work_dir / '07_report_llm_enhanced.json'
     bundle_dir = work_dir / '08_bundle'
     application_plan = work_dir / '09_application_plan.json'
     evidence_checklist = work_dir / '10_evidence_checklist.json'
@@ -102,6 +103,13 @@ def main() -> int:
         '--cluster-output', str(risk_clusters)
     ])
     report_for_bundle = auto_rechecked_report
+
+    run([
+        'python3', str(SCRIPTS / 'enhance_suggestions_with_llm.py'),
+        '--report', str(report_for_bundle),
+        '--output', str(llm_enhanced_report),
+    ])
+    report_for_bundle = llm_enhanced_report
 
     bundle = run(['python3', str(SCRIPTS / 'render_report_bundle.py'), str(report_for_bundle), '--out-dir', str(bundle_dir)])
 

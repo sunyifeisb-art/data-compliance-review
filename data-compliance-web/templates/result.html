@@ -435,6 +435,26 @@
         }
         .analysis-text { font-size: 14px; line-height: 1.7; color: var(--text-secondary); }
 
+        /* Rewrite Box */
+        .rewrite-box {
+            background: var(--green-bg);
+            border: 1px solid var(--green-border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .rewrite-head {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--green);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .rewrite-text { font-size: 14px; line-height: 1.7; color: var(--text-secondary); }
+
         /* Fold */
         .fold-row {
             padding: 16px 24px;
@@ -976,6 +996,12 @@
                                 <p class="suggestion-head">修改建议</p>
                                 <p class="suggestion-text">{{ item.suggestion }}</p>
                             </div>
+                            {% if item.rewritten_clause %}
+                            <div class="rewrite-box">
+                                <p class="rewrite-head">改写示例</p>
+                                <p class="rewrite-text">{{ item.rewritten_clause }}</p>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="fold-row">
