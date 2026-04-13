@@ -287,13 +287,24 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         subprocess.run([
             'python3', str(SCRIPTS_DIR / 'auto_recheck_report.py'),
             '--report', str(report_for_bundle),
-            '--output', str(auto_rechecked_report),
+            '--output', str(report_for_bundle),
             '--queue-output', str(auto_recheck_queue),
             '--cluster-output', str(risk_clusters)
         ], check=True, capture_output=True)
+        report_for_bundle = auto_rechecked_report
+
+        # 步骤8+1: LLM 增强建议与改写示例
+        llm_enhanced_report = work_dir / '07_report_llm_enhanced.json'
+        subprocess.run([
+            'python3', str(SCRIPTS_DIR / 'enhance_suggestions_with_llm.py'),
+            '--report', str(report_for_bundle),
+            '--output', str(llm_enhanced_report),
+        ], check=True, capture_output=True)
+        report_for_bundle = llm_enhanced_report
+
         bundle_result = subprocess.run([
             'python3', str(SCRIPTS_DIR / 'render_report_bundle.py'),
-            str(auto_rechecked_report),
+            str(report_for_bundle),
             '--out-dir', str(bundle_dir)
         ], capture_output=True, text=True, check=True)
         bundle = json.loads(bundle_result.stdout)
@@ -315,7 +326,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         # 应用层场景计划
         subprocess.run([
             'python3', str(SCRIPTS_DIR / 'build_application_scenario_plan.py'),
-            '--report', str(auto_rechecked_report),
+            '--report', str(report_for_bundle),
             '--classification', str(classification),
             '--output', str(application_plan)
         ], check=True, capture_output=True)
@@ -323,7 +334,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         # 证据清单
         subprocess.run([
             'python3', str(SCRIPTS_DIR / 'build_evidence_checklist.py'),
-            '--report', str(auto_rechecked_report),
+            '--report', str(report_for_bundle),
             '--application-plan', str(application_plan),
             '--output', str(evidence_checklist)
         ], check=True, capture_output=True)
@@ -331,7 +342,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         # SDK合作方审查包
         subprocess.run([
             'python3', str(SCRIPTS_DIR / 'build_sdk_partner_review_pack.py'),
-            '--report', str(auto_rechecked_report),
+            '--report', str(report_for_bundle),
             '--application-plan', str(application_plan),
             '--evidence-checklist', str(evidence_checklist),
             '--output', str(sdk_partner_pack)
@@ -340,7 +351,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         # 数据出境审查包
         subprocess.run([
             'python3', str(SCRIPTS_DIR / 'build_cross_border_review_pack.py'),
-            '--report', str(auto_rechecked_report),
+            '--report', str(report_for_bundle),
             '--application-plan', str(application_plan),
             '--evidence-checklist', str(evidence_checklist),
             '--output', str(cross_border_pack)
@@ -349,7 +360,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         # 隐私整改审查包
         subprocess.run([
             'python3', str(SCRIPTS_DIR / 'build_privacy_remediation_pack.py'),
-            '--report', str(auto_rechecked_report),
+            '--report', str(report_for_bundle),
             '--application-plan', str(application_plan),
             '--evidence-checklist', str(evidence_checklist),
             '--output', str(privacy_remediation_pack)
@@ -362,7 +373,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         remediation_tasks = work_dir / '14_remediation_tasks.json'
         subprocess.run([
             'python3', str(SCRIPTS_DIR / 'build_remediation_task_plan.py'),
-            '--report', str(auto_rechecked_report),
+            '--report', str(report_for_bundle),
             '--queue', str(auto_recheck_queue),
             '--clusters', str(risk_clusters),
             '--evidence-checklist', str(evidence_checklist),
@@ -374,7 +385,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         task['status'] = 'completed'
         task['completed_at'] = datetime.now().isoformat()
         task['result'] = {
-            'report': str(auto_rechecked_report),
+            'report': str(report_for_bundle),
             'report_markdown': bundle.get('markdown', ''),
             'remediation': str(remediation_tasks),
             'evidence': str(evidence_checklist),
