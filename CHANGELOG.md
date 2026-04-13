@@ -16,6 +16,11 @@
 - 补充 `requirements.txt` 中缺失的 `pypdf` 依赖，修复 PDF 上传预处理报错。
 - **文件改动**：`data-compliance-web/templates/result.html`、`data-compliance-web/templates/index.html`、`data-compliance-web/requirements.txt`
 
+### 14:39 CST — 你 — 同步更新 README 与 Web 端说明文档
+- 更新根目录 `README.md`：补充 2026-04-13 前端与体验优化说明，包括设计系统统一、风险卡片分栏、字号优化、自动填充、依赖修复等。
+- 更新 `data-compliance-web/README.md`：修正使用步骤、输出内容、功能特点、注意事项和技术说明，增加 PDF 支持、自动填充文档名、自定义 CSS 字体体系等描述。
+- **文件改动**：`README.md`、`data-compliance-web/README.md`
+
 ## 2026-04-11
 
 ### 21:10 CST — 向阳 — 修复下载整改清单失败，并继续压缩报告噪音
