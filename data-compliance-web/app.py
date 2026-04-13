@@ -26,6 +26,7 @@ OUTPUT_FOLDER = BASE_DIR / 'output'
 SCRIPTS_DIR = BASE_DIR / 'scripts'
 LOCAL_REGULATION_DB = PROJECT_ROOT / 'knowledge-base' / 'local-regulations.sqlite3'
 ALLOWED_EXTENSIONS = {'txt', 'md', 'doc', 'docx', 'pdf'}
+PYTHON_BIN = os.environ.get('COMPLIANCEAI_PYTHON') or sys.executable or 'python3'
 
 # 确保目录存在
 UPLOAD_FOLDER.mkdir(exist_ok=True)
@@ -162,7 +163,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         time.sleep(0.5)  # 给用户看到进度
 
         preprocessed = work_dir / '01_preprocessed.json'
-        cmd = ['python3', str(SCRIPTS_DIR / 'preprocess_input.py'), '--output', str(preprocessed)]
+        cmd = [PYTHON_BIN, str(SCRIPTS_DIR / 'preprocess_input.py'), '--output', str(preprocessed)]
         if is_text:
             cmd.extend(['--text', input_path.read_text(encoding='utf-8')])
         else:
@@ -174,7 +175,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         time.sleep(0.3)
 
         classification = work_dir / '02_classification.json'
-        cmd = ['python3', str(SCRIPTS_DIR / 'classify_document_type.py')]
+        cmd = [PYTHON_BIN, str(SCRIPTS_DIR / 'classify_document_type.py')]
         if is_text:
             cmd.extend(['--text', input_path.read_text(encoding='utf-8')])
         else:
@@ -188,7 +189,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
 
         planned = work_dir / '03_paths.json'
         result = subprocess.run(
-            ['python3', str(SCRIPTS_DIR / 'plan_review_paths.py'), '--classification', str(classification)],
+            [PYTHON_BIN, str(SCRIPTS_DIR / 'plan_review_paths.py'), '--classification', str(classification)],
             capture_output=True, text=True, check=True
         )
         planned.write_text(result.stdout, encoding='utf-8')
@@ -199,7 +200,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
 
         tasks_file = work_dir / '04_tasks.json'
         subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'generate_review_tasks.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'generate_review_tasks.py'),
             '--classification', str(classification),
             '--planned-paths', str(planned),
             '--output', str(tasks_file)
@@ -234,7 +235,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
             })
 
         result = subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'run_rule_based_review.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'run_rule_based_review.py'),
             '--preprocessed', str(preprocessed),
             '--tasks', str(tasks_file),
             '--out-dir', str(findings_dir)
@@ -250,7 +251,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         skeleton = work_dir / '05_report_skeleton.json'
         classification_data = json.loads(classification.read_text(encoding='utf-8'))
         subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'build_report_skeleton.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'build_report_skeleton.py'),
             '--document-name', document_name,
             '--doc-type', classification_data.get('type', 'unknown'),
             '--paths-file', str(planned),
@@ -261,7 +262,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
 
         # 构建命令参数
         cmd = [
-            'python3', str(SCRIPTS_DIR / 'aggregate_review_findings.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'aggregate_review_findings.py'),
             '--skeleton', str(skeleton),
             '--output', str(final_report)
         ]
@@ -285,7 +286,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         enriched_report = work_dir / '07_report_enriched.json'
         if norm_mapping.exists():
             subprocess.run([
-                'python3', str(SCRIPTS_DIR / 'apply_external_norm_mapping.py'),
+                PYTHON_BIN, str(SCRIPTS_DIR / 'apply_external_norm_mapping.py'),
                 '--report', str(final_report),
                 '--mapping', str(norm_mapping),
                 '--output', str(mapped_report)
@@ -296,7 +297,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
 
         if LOCAL_REGULATION_DB.exists():
             subprocess.run([
-                'python3', str(PROJECT_ROOT / 'scripts' / 'enrich_report_with_regulation_db.py'),
+                PYTHON_BIN, str(PROJECT_ROOT / 'scripts' / 'enrich_report_with_regulation_db.py'),
                 '--report', str(report_for_bundle),
                 '--db', str(LOCAL_REGULATION_DB),
                 '--output', str(enriched_report)
@@ -312,7 +313,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         risk_clusters = work_dir / '07_risk_clusters.json'
         bundle_dir = work_dir / '08_bundle'
         subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'auto_recheck_report.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'auto_recheck_report.py'),
             '--report', str(report_for_bundle),
             '--output', str(auto_rechecked_report),
             '--queue-output', str(auto_recheck_queue),
@@ -340,7 +341,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         report_for_bundle = llm_enhanced_report
 
         bundle_result = subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'render_report_bundle.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'render_report_bundle.py'),
             str(report_for_bundle),
             '--out-dir', str(bundle_dir)
         ], capture_output=True, text=True, check=True)
@@ -362,7 +363,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
 
         # 应用层场景计划
         subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'build_application_scenario_plan.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'build_application_scenario_plan.py'),
             '--report', str(report_for_bundle),
             '--classification', str(classification),
             '--output', str(application_plan)
@@ -370,7 +371,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
 
         # 证据清单
         subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'build_evidence_checklist.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'build_evidence_checklist.py'),
             '--report', str(report_for_bundle),
             '--application-plan', str(application_plan),
             '--output', str(evidence_checklist)
@@ -378,7 +379,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
 
         # SDK合作方审查包
         subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'build_sdk_partner_review_pack.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'build_sdk_partner_review_pack.py'),
             '--report', str(report_for_bundle),
             '--application-plan', str(application_plan),
             '--evidence-checklist', str(evidence_checklist),
@@ -387,7 +388,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
 
         # 数据出境审查包
         subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'build_cross_border_review_pack.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'build_cross_border_review_pack.py'),
             '--report', str(report_for_bundle),
             '--application-plan', str(application_plan),
             '--evidence-checklist', str(evidence_checklist),
@@ -396,7 +397,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
 
         # 隐私整改审查包
         subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'build_privacy_remediation_pack.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'build_privacy_remediation_pack.py'),
             '--report', str(report_for_bundle),
             '--application-plan', str(application_plan),
             '--evidence-checklist', str(evidence_checklist),
@@ -409,7 +410,7 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
 
         remediation_tasks = work_dir / '14_remediation_tasks.json'
         subprocess.run([
-            'python3', str(SCRIPTS_DIR / 'build_remediation_task_plan.py'),
+            PYTHON_BIN, str(SCRIPTS_DIR / 'build_remediation_task_plan.py'),
             '--report', str(report_for_bundle),
             '--queue', str(auto_recheck_queue),
             '--clusters', str(risk_clusters),
