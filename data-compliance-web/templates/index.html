@@ -527,6 +527,39 @@ const closeError = document.getElementById('closeError');
 
 let currentFile = null;
 
+function apiUrl(path) {
+    try {
+        return new URL(path, window.location.href).toString();
+    } catch (_) {
+        return path;
+    }
+}
+
+function normalizeUploadFilename(filename) {
+    const trimmed = (filename || '').trim() || 'upload.txt';
+    const dotIndex = trimmed.lastIndexOf('.');
+    const ext = dotIndex >= 0 ? trimmed.slice(dotIndex) : '';
+    const stem = dotIndex >= 0 ? trimmed.slice(0, dotIndex) : trimmed;
+    const normalizedStem = stem
+        .normalize('NFKD')
+        .replace(/[^\w.-]+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '') || 'upload';
+    return `${normalizedStem}${ext}`;
+}
+
+function buildUploadFile(file) {
+    const safeName = normalizeUploadFilename(file?.name || 'upload.txt');
+    try {
+        return new File([file], safeName, {
+            type: file.type || 'application/octet-stream',
+            lastModified: file.lastModified || Date.now(),
+        });
+    } catch (_) {
+        return file;
+    }
+}
+
 selectFileBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     fileInput.click();
@@ -586,25 +619,35 @@ startBtn.addEventListener('click', async () => {
 
     const fd = new FormData();
     fd.append('document_name', name);
-    if (currentFile) fd.append('file', currentFile);
+    if (currentFile) {
+        const uploadFile = buildUploadFile(currentFile);
+        fd.append('file', uploadFile, normalizeUploadFilename(currentFile.name));
+    }
     else fd.append('input_text', text);
 
     progressModal.classList.add('show');
     setProgress(0, '准备开始…');
 
     try {
-        const res = await fetch('/api/upload', { method: 'POST', body: fd });
+        const res = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || '上传失败');
         streamProgress(data.task_id);
     } catch(e) {
         progressModal.classList.remove('show');
-        showErr(e.message);
+        const msg = e?.message ? String(e.message) : String(e);
+        console.error('upload failed', {
+            message: msg,
+            href: window.location.href,
+            origin: window.location.origin,
+            fileName: currentFile?.name || null,
+        });
+        showErr(msg);
     }
 });
 
 function streamProgress(taskId) {
-    const es = new EventSource(`/api/progress/${taskId}`);
+    const es = new EventSource(apiUrl(`/api/progress/${encodeURIComponent(taskId)}`));
     es.onmessage = evt => {
         const d = JSON.parse(evt.data);
         if (d.error) { 
@@ -620,7 +663,7 @@ function streamProgress(taskId) {
         if (d.status === 'completed') {
             es.close();
             setProgress(100, '审查完成，正在跳转…');
-            setTimeout(() => window.location.href = `/result/${taskId}`, 500);
+            setTimeout(() => window.location.href = apiUrl(`/result/${encodeURIComponent(taskId)}`), 500);
         } else if (d.status === 'failed') {
             es.close(); 
             progressModal.classList.remove('show');

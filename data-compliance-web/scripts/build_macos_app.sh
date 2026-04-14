@@ -421,5 +421,6 @@ swiftc \
   -o "$APP_BUNDLE/Contents/MacOS/${APP_NAME}"
 
 chmod +x "$APP_BUNDLE/Contents/MacOS/${APP_NAME}"
+codesign --force --deep -s - "$APP_BUNDLE"
 
 echo "已生成: $APP_BUNDLE"
