@@ -11,6 +11,8 @@ from pathlib import Path
 WEB_DIR = Path(__file__).resolve().parent
 os.chdir(WEB_DIR)
 os.environ.setdefault("COMPLIANCEAI_PYTHON", sys.executable)
+if str(WEB_DIR) not in sys.path:
+    sys.path.insert(0, str(WEB_DIR))
 
 import app as compliance_app
 
