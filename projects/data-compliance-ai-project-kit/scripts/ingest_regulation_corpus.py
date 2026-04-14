@@ -168,6 +168,8 @@ def infer_region(name: str, relative_path: str) -> str | None:
 
 
 def infer_doc_category(top_level_bucket: str, name: str) -> str:
+    if "国家法律" in top_level_bucket or "法律" in top_level_bucket:
+        return "national_law"
     if "地方" in top_level_bucket:
         return "local_policy"
     if "国家规范" in top_level_bucket or "政策要求" in top_level_bucket:
@@ -182,6 +184,8 @@ def infer_doc_category(top_level_bucket: str, name: str) -> str:
 def infer_effect_level(top_level_bucket: str, name: str) -> str:
     if "征求意见稿" in name or "草案" in name:
         return "征求意见稿/草案"
+    if "国家法律" in top_level_bucket or "法律" in top_level_bucket:
+        return "法律"
     if "地方" in top_level_bucket:
         return "地方政策/地方标准"
     if "标准" in top_level_bucket or "行业" in top_level_bucket:
