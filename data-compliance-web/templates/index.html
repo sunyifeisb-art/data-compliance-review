@@ -72,13 +72,43 @@
             line-height: 1.7;
             margin-bottom: 40px;
         }
-        .upload-card {
-            background: var(--bg-elevated);
-            border-radius: 24px;
-            padding: 48px;
-            box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border);
-        }
+	        .upload-card {
+	            background: var(--bg-elevated);
+	            border-radius: 24px;
+	            padding: 48px;
+	            box-shadow: var(--shadow-lg);
+	            border: 1px solid var(--border);
+	        }
+	        .workbench {
+	            display: grid;
+	            gap: 20px;
+	        }
+	        .review-toggle {
+	            display: grid;
+	            grid-template-columns: 1fr 1fr;
+	            gap: 8px;
+	            padding: 4px;
+	            background: var(--bg-subtle);
+	            border: 1px solid var(--border);
+	            border-radius: 14px;
+	            margin-bottom: 16px;
+	        }
+	        .mode-btn {
+	            border: 0;
+	            border-radius: 10px;
+	            padding: 10px 12px;
+	            background: transparent;
+	            color: var(--text-secondary);
+	            font: inherit;
+	            font-size: 14px;
+	            font-weight: 600;
+	            cursor: pointer;
+	        }
+	        .mode-btn.active {
+	            background: var(--bg);
+	            color: var(--accent);
+	            box-shadow: var(--shadow);
+	        }
         .upload-zone {
             border: 2px dashed var(--border);
             border-radius: 16px;
@@ -399,7 +429,78 @@
         .field-input:focus {
             border-color: var(--accent);
         }
-        .field-input::placeholder { color: var(--text-muted); }
+	        .field-input::placeholder { color: var(--text-muted); }
+	        .history-panel {
+	            background: var(--bg);
+	            border: 1px solid var(--border);
+	            border-radius: 20px;
+	            padding: 24px;
+	            box-shadow: var(--shadow);
+	        }
+	        .history-head {
+	            display: flex;
+	            align-items: center;
+	            justify-content: space-between;
+	            gap: 16px;
+	            margin-bottom: 14px;
+	        }
+	        .history-title {
+	            font-size: 14px;
+	            font-weight: 700;
+	            color: var(--text-primary);
+	        }
+	        .history-refresh {
+	            border: 1px solid var(--border);
+	            background: var(--bg);
+	            color: var(--text-secondary);
+	            border-radius: 10px;
+	            padding: 7px 10px;
+	            font: inherit;
+	            font-size: 12px;
+	            font-weight: 600;
+	            cursor: pointer;
+	        }
+	        .history-list {
+	            display: grid;
+	            gap: 8px;
+	            max-height: 220px;
+	            overflow: auto;
+	        }
+	        .history-item {
+	            display: grid;
+	            grid-template-columns: 1fr auto;
+	            gap: 12px;
+	            align-items: center;
+	            padding: 12px;
+	            border: 1px solid var(--border);
+	            border-radius: 12px;
+	            text-decoration: none;
+	            color: inherit;
+	            background: var(--bg-subtle);
+	        }
+	        .history-name {
+	            font-size: 13px;
+	            font-weight: 600;
+	            color: var(--text-primary);
+	            white-space: nowrap;
+	            overflow: hidden;
+	            text-overflow: ellipsis;
+	        }
+	        .history-meta {
+	            margin-top: 2px;
+	            font-size: 12px;
+	            color: var(--text-muted);
+	        }
+	        .history-status {
+	            font-size: 12px;
+	            font-weight: 700;
+	            color: var(--accent);
+	        }
+	        .history-empty {
+	            font-size: 13px;
+	            color: var(--text-muted);
+	            padding: 8px 0;
+	        }
         @media (max-width: 900px) {
             .main { grid-template-columns: 1fr; gap: 48px; }
             .features-bar { grid-template-columns: 1fr; }
@@ -420,17 +521,22 @@
             <h1>让合规审查<br>像呼吸一样自然</h1>
             <p>AI 驱动的智能审查系统，自动识别法律文件中的合规风险，为您的业务保驾护航。</p>
         </div>
-        <div class="upload-card">
-            <label class="field-label">文档名称</label>
-            <input type="text" id="documentName" class="field-input" placeholder="例：某 App 隐私政策 V2.1">
-            
-            <div id="dropZone" class="upload-zone">
-                <div class="upload-icon">📁</div>
-                <h3>上传文件开始审查</h3>
-                <p>支持 PDF、Word、TXT 格式</p>
-                <button class="btn-primary" id="selectFileBtn">选择文件</button>
-                <input type="file" id="fileInput" style="display:none" accept=".txt,.md,.doc,.docx,.pdf">
-            </div>
+	        <div class="workbench">
+	        <div class="upload-card">
+	            <label class="field-label">文档名称</label>
+	            <input type="text" id="documentName" class="field-input" placeholder="例：某 App 隐私政策 V2.1">
+	            <div class="review-toggle" role="tablist" aria-label="审查模式">
+	                <button class="mode-btn active" type="button" data-review-type="document">文档审查</button>
+	                <button class="mode-btn" type="button" data-review-type="code">代码审查</button>
+	            </div>
+	            
+	            <div id="dropZone" class="upload-zone">
+	                <div class="upload-icon">📁</div>
+	                <h3>上传文件开始审查</h3>
+	                <p id="supportText">支持 PDF、Word、TXT 格式</p>
+	                <button class="btn-primary" id="selectFileBtn">选择文件</button>
+	                <input type="file" id="fileInput" style="display:none" accept=".txt,.md,.doc,.docx,.pdf,.py,.js,.jsx,.ts,.tsx,.java,.go,.php,.rb,.swift,.kt,.c,.cc,.cpp,.h,.hpp,.cs,.rs,.sh,.sql,.html,.css,.json,.yaml,.yml,.toml,.env">
+	            </div>
             
             <div id="selectedFile" style="display:none">
                 <div class="file-card">
@@ -447,13 +553,33 @@
             
             <div class="or-divider">或</div>
             
-            <textarea id="textInput" class="text-input-area" rows="4" placeholder="直接粘贴隐私政策或数据处理协议全文..."></textarea>
-            
-            <button id="startBtn" class="btn-primary" style="width: 100%; margin-top: 16px;">
-                开始审查
-            </button>
-        </div>
-    </main>
+	            <textarea id="textInput" class="text-input-area" rows="4" placeholder="直接粘贴隐私政策或数据处理协议全文..."></textarea>
+	            
+	            <button id="startBtn" class="btn-primary" style="width: 100%; margin-top: 16px;">
+	                开始审查
+	            </button>
+	        </div>
+	        <section class="history-panel" aria-label="审查记录">
+	            <div class="history-head">
+	                <p class="history-title">审查记录</p>
+	                <button class="history-refresh" id="refreshHistory" type="button">刷新</button>
+	            </div>
+	            <div class="history-list" id="historyList">
+	                {% for item in history %}
+	                <a class="history-item" href="/result/{{ item.id }}">
+	                    <div>
+	                        <p class="history-name">{{ item.document_name }}</p>
+	                        <p class="history-meta">{{ '代码' if item.review_type == 'code' else '文档' }} · {{ item.created_at[:19].replace('T', ' ') }}</p>
+	                    </div>
+	                    <span class="history-status">{{ item.status }}</span>
+	                </a>
+	                {% else %}
+	                <p class="history-empty">暂无审查记录</p>
+	                {% endfor %}
+	            </div>
+	        </section>
+	        </div>
+	    </main>
     <section class="features-bar">
         <div class="feature-item">
             <div class="feature-icon">⚡</div>
@@ -505,193 +631,268 @@
         </div>
     </div>
 
-<script>
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-const selectFileBtn = document.getElementById('selectFileBtn');
-const selectedFile = document.getElementById('selectedFile');
-const fileNameEl = document.getElementById('fileName');
-const fileSizeEl = document.getElementById('fileSize');
-const removeFile = document.getElementById('removeFile');
-const textInput = document.getElementById('textInput');
-const docName = document.getElementById('documentName');
-const startBtn = document.getElementById('startBtn');
-const progressModal = document.getElementById('progressModal');
-const progressMsg = document.getElementById('progressMessage');
-const progressBar = document.getElementById('progressBar');
-const progressPct = document.getElementById('progressPercent');
-const checkpoints = document.getElementById('checkpoints');
-const errorModal = document.getElementById('errorModal');
-const errorMsg = document.getElementById('errorMessage');
-const closeError = document.getElementById('closeError');
+    <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    const selectedFile = document.getElementById('selectedFile');
+    const fileNameEl = document.getElementById('fileName');
+    const fileSizeEl = document.getElementById('fileSize');
+    const removeFile = document.getElementById('removeFile');
+    const textInput = document.getElementById('textInput');
+    const docName = document.getElementById('documentName');
+    const startBtn = document.getElementById('startBtn');
+    const progressModal = document.getElementById('progressModal');
+    const progressMsg = document.getElementById('progressMessage');
+    const progressBar = document.getElementById('progressBar');
+    const progressPct = document.getElementById('progressPercent');
+    const checkpoints = document.getElementById('checkpoints');
+    const errorModal = document.getElementById('errorModal');
+    const errorMsg = document.getElementById('errorMessage');
+    const closeError = document.getElementById('closeError');
+    const supportText = document.getElementById('supportText');
+    const historyList = document.getElementById('historyList');
+    const refreshHistory = document.getElementById('refreshHistory');
 
-let currentFile = null;
+    let currentFile = null;
+    let reviewType = 'document';
 
-function apiUrl(path) {
-    try {
-        return new URL(path, window.location.href).toString();
-    } catch (_) {
-        return path;
+    function apiUrl(path) {
+        try {
+            return new URL(path, window.location.href).toString();
+        } catch (_) {
+            return path;
+        }
     }
-}
 
-function normalizeUploadFilename(filename) {
-    const trimmed = (filename || '').trim() || 'upload.txt';
-    const dotIndex = trimmed.lastIndexOf('.');
-    const ext = dotIndex >= 0 ? trimmed.slice(dotIndex) : '';
-    const stem = dotIndex >= 0 ? trimmed.slice(0, dotIndex) : trimmed;
-    const normalizedStem = stem
-        .normalize('NFKD')
-        .replace(/[^\w.-]+/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^_+|_+$/g, '') || 'upload';
-    return `${normalizedStem}${ext}`;
-}
+    function normalizeUploadFilename(filename) {
+        const trimmed = (filename || '').trim() || 'upload.txt';
+        const dotIndex = trimmed.lastIndexOf('.');
+        const ext = dotIndex >= 0 ? trimmed.slice(dotIndex) : '';
+        const stem = dotIndex >= 0 ? trimmed.slice(0, dotIndex) : trimmed;
+        const normalizedStem = stem
+            .normalize('NFKD')
+            .replace(/[^\w.-]+/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_+|_+$/g, '') || 'upload';
+        return `${normalizedStem}${ext}`;
+    }
 
-function buildUploadFile(file) {
-    const safeName = normalizeUploadFilename(file?.name || 'upload.txt');
-    try {
-        return new File([file], safeName, {
-            type: file.type || 'application/octet-stream',
-            lastModified: file.lastModified || Date.now(),
+    function buildUploadFile(file) {
+        const safeName = normalizeUploadFilename(file?.name || 'upload.txt');
+        try {
+            return new File([file], safeName, {
+                type: file.type || 'application/octet-stream',
+                lastModified: file.lastModified || Date.now(),
+            });
+        } catch (_) {
+            return file;
+        }
+    }
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(item => item.classList.remove('active'));
+            btn.classList.add('active');
+            reviewType = btn.dataset.reviewType || 'document';
+            currentFile = null;
+            fileInput.value = '';
+            selectedFile.style.display = 'none';
+            dropZone.style.display = 'block';
+            supportText.textContent = reviewType === 'code'
+                ? '支持 JS、TS、Python、Java、Go、SQL 等代码文件'
+                : '支持 PDF、Word、TXT 格式';
+            textInput.placeholder = reviewType === 'code'
+                ? '直接粘贴代码，系统会扫描个人信息处理、密钥、日志、传输和本地存储风险...'
+                : '直接粘贴隐私政策或数据处理协议全文...';
         });
-    } catch (_) {
-        return file;
-    }
-}
+    });
 
-selectFileBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    fileInput.click();
-});
-dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover', e => { 
-    e.preventDefault(); 
-    dropZone.classList.add('drag-active'); 
-});
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
-dropZone.addEventListener('drop', e => {
-    e.preventDefault(); 
-    dropZone.classList.remove('drag-active');
-    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-});
-fileInput.addEventListener('change', e => { 
-    if (e.target.files.length) handleFile(e.target.files[0]); 
-});
+    selectFileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+    });
 
-function handleFile(file) {
-    currentFile = file;
-    fileNameEl.textContent = file.name;
-    fileSizeEl.textContent = fmtSize(file.size);
-    selectedFile.style.display = 'block';
-    dropZone.style.display = 'none';
-    textInput.value = '';
-    if (!docName.value.trim()) {
-        const baseName = file.name.replace(/\.[^/.]+$/, '');
-        docName.value = baseName;
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropZone.classList.add('drag-active');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-active'));
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-active');
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', e => {
+        if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+        currentFile = file;
+        fileNameEl.textContent = file.name;
+        fileSizeEl.textContent = fmtSize(file.size);
+        selectedFile.style.display = 'block';
+        dropZone.style.display = 'none';
+        textInput.value = '';
+        if (!docName.value.trim()) {
+            const baseName = file.name.replace(/\.[^/.]+$/, '');
+            docName.value = baseName;
+        }
     }
-}
-removeFile.addEventListener('click', () => {
-    currentFile = null;
-    fileInput.value = '';
-    selectedFile.style.display = 'none';
-    dropZone.style.display = 'block';
-});
-textInput.addEventListener('input', () => {
-    if (textInput.value.trim()) { 
-        currentFile = null; 
+
+    removeFile.addEventListener('click', () => {
+        currentFile = null;
+        fileInput.value = '';
         selectedFile.style.display = 'none';
         dropZone.style.display = 'block';
-    }
-});
+    });
 
-function fmtSize(b) {
-    if (b < 1024) return b + ' B';
-    if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-    return (b/1048576).toFixed(1) + ' MB';
-}
-
-startBtn.addEventListener('click', async () => {
-    const name = docName.value.trim();
-    if (!name) { showErr('请输入文档名称'); return; }
-    const text = textInput.value.trim();
-    if (!currentFile && !text) { showErr('请上传文件或输入文本'); return; }
-
-    const fd = new FormData();
-    fd.append('document_name', name);
-    if (currentFile) {
-        const uploadFile = buildUploadFile(currentFile);
-        fd.append('file', uploadFile, normalizeUploadFilename(currentFile.name));
-    }
-    else fd.append('input_text', text);
-
-    progressModal.classList.add('show');
-    setProgress(0, '准备开始…');
-
-    try {
-        const res = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || '上传失败');
-        streamProgress(data.task_id);
-    } catch(e) {
-        progressModal.classList.remove('show');
-        const msg = e?.message ? String(e.message) : String(e);
-        console.error('upload failed', {
-            message: msg,
-            href: window.location.href,
-            origin: window.location.origin,
-            fileName: currentFile?.name || null,
-        });
-        showErr(msg);
-    }
-});
-
-function streamProgress(taskId) {
-    const es = new EventSource(apiUrl(`/api/progress/${encodeURIComponent(taskId)}`));
-    es.onmessage = evt => {
-        const d = JSON.parse(evt.data);
-        if (d.error) { 
-            es.close(); 
-            progressModal.classList.remove('show'); 
-            showErr(d.error); 
-            return; 
+    textInput.addEventListener('input', () => {
+        if (textInput.value.trim()) {
+            currentFile = null;
+            selectedFile.style.display = 'none';
+            dropZone.style.display = 'block';
         }
-        const p = d.progress || {};
-        const pct = Math.round(((p.step||0)/(p.total_steps||11))*100);
-        setProgress(pct, p.message || '处理中…');
-        if (p.message) addCheckpoint(p.message);
-        if (d.status === 'completed') {
-            es.close();
-            setProgress(100, '审查完成，正在跳转…');
-            setTimeout(() => window.location.href = apiUrl(`/result/${encodeURIComponent(taskId)}`), 500);
-        } else if (d.status === 'failed') {
-            es.close(); 
+    });
+
+    function fmtSize(b) {
+        if (b < 1024) return b + ' B';
+        if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+        return (b / 1048576).toFixed(1) + ' MB';
+    }
+
+    startBtn.addEventListener('click', async () => {
+        const name = docName.value.trim();
+        if (!name) {
+            showErr('请输入文档名称');
+            return;
+        }
+        const text = textInput.value.trim();
+        if (!currentFile && !text) {
+            showErr('请上传文件或输入文本');
+            return;
+        }
+
+        const fd = new FormData();
+        fd.append('document_name', name);
+        fd.append('review_type', reviewType);
+        if (currentFile) {
+            const uploadFile = buildUploadFile(currentFile);
+            fd.append('file', uploadFile, normalizeUploadFilename(currentFile.name));
+        } else {
+            fd.append('input_text', text);
+        }
+
+        progressModal.classList.add('show');
+        setProgress(0, '准备开始…');
+
+        try {
+            const res = await fetch(apiUrl('/api/upload'), { method: 'POST', body: fd });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || '上传失败');
+            streamProgress(data.task_id);
+        } catch (e) {
             progressModal.classList.remove('show');
-            showErr(p.message || '审查失败');
+            const msg = e?.message ? String(e.message) : String(e);
+            console.error('upload failed', {
+                message: msg,
+                href: window.location.href,
+                origin: window.location.origin,
+                fileName: currentFile?.name || null,
+            });
+            showErr(msg);
         }
-    };
-    es.onerror = () => es.close();
-}
+    });
 
-function setProgress(pct, msg) {
-    progressBar.style.width = pct + '%';
-    progressPct.textContent = pct + '%';
-    progressMsg.textContent = msg;
-}
-function addCheckpoint(msg) {
-    const last = checkpoints.lastElementChild;
-    if (last && last.textContent.trim() === msg.trim()) return;
-    const el = document.createElement('div');
-    el.className = 'checkpoint-entry';
-    el.innerHTML = `<span class="checkpoint-dot done"></span><span>${msg}</span>`;
-    checkpoints.appendChild(el);
-    checkpoints.scrollTop = checkpoints.scrollHeight;
-}
-function showErr(msg) {
-    errorMsg.textContent = msg;
-    errorModal.classList.add('show');
-}
-closeError.addEventListener('click', () => errorModal.classList.remove('show'));
-</script>
+    function streamProgress(taskId) {
+        const es = new EventSource(apiUrl(`/api/progress/${encodeURIComponent(taskId)}`));
+        es.onmessage = evt => {
+            const data = JSON.parse(evt.data);
+            if (data.error) {
+                es.close();
+                progressModal.classList.remove('show');
+                showErr(data.error);
+                return;
+            }
+
+            const p = data.progress || {};
+            const pct = Math.round(((p.step || 0) / (p.total_steps || 11)) * 100);
+            setProgress(pct, p.message || '处理中…');
+            if (p.message) addCheckpoint(p.message);
+
+            if (data.status === 'completed') {
+                es.close();
+                setProgress(100, '审查完成，正在跳转…');
+                setTimeout(() => window.location.href = apiUrl(`/result/${encodeURIComponent(taskId)}`), 500);
+                return;
+            }
+
+            if (data.status === 'failed') {
+                es.close();
+                progressModal.classList.remove('show');
+                showErr(p.message || '审查失败');
+            }
+        };
+        es.onerror = () => es.close();
+    }
+
+    async function loadHistory() {
+        try {
+            const res = await fetch(apiUrl('/api/history'), { cache: 'no-store' });
+            const data = await res.json();
+            const items = data.items || [];
+            historyList.innerHTML = items.length ? items.map(item => `
+                <a class="history-item" href="/result/${encodeURIComponent(item.id)}">
+                    <div>
+                        <p class="history-name">${escapeHtml(item.document_name || '未命名任务')}</p>
+                        <p class="history-meta">${item.review_type === 'code' ? '代码' : '文档'} · ${escapeHtml(formatTime(item.created_at))}</p>
+                    </div>
+                    <span class="history-status">${escapeHtml(item.status || '')}</span>
+                </a>
+            `).join('') : '<p class="history-empty">暂无审查记录</p>';
+        } catch (e) {
+            historyList.innerHTML = '<p class="history-empty">记录读取失败</p>';
+        }
+    }
+
+    function formatTime(value) {
+        return value ? String(value).slice(0, 19).replace('T', ' ') : '';
+    }
+
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, ch => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+        }[ch]));
+    }
+
+    function setProgress(pct, msg) {
+        progressBar.style.width = pct + '%';
+        progressPct.textContent = pct + '%';
+        progressMsg.textContent = msg;
+    }
+
+    function addCheckpoint(msg) {
+        const last = checkpoints.lastElementChild;
+        if (last && last.textContent.trim() === msg.trim()) return;
+        const el = document.createElement('div');
+        el.className = 'checkpoint-entry';
+        el.innerHTML = `<span class="checkpoint-dot done"></span><span>${escapeHtml(msg)}</span>`;
+        checkpoints.appendChild(el);
+        checkpoints.scrollTop = checkpoints.scrollHeight;
+    }
+
+    function showErr(msg) {
+        errorMsg.textContent = msg;
+        errorModal.classList.add('show');
+    }
+
+    refreshHistory.addEventListener('click', loadHistory);
+    closeError.addEventListener('click', () => errorModal.classList.remove('show'));
+    </script>
 </body>
 </html>

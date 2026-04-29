@@ -159,17 +159,34 @@
             color: var(--text-muted);
             margin-bottom: 12px;
         }
-        .dl-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+	        .dl-link {
+	            display: flex;
+	            align-items: center;
+	            gap: 10px;
             padding: 10px 0;
             font-size: 13px;
             color: var(--text-secondary);
             text-decoration: none;
             transition: color 0.2s;
-        }
-        .dl-link:hover { color: var(--accent); }
+	        }
+	        .dl-link:hover { color: var(--accent); }
+	        .download-toast {
+	            position: fixed;
+	            left: 50%;
+	            bottom: 28px;
+	            transform: translateX(-50%);
+	            max-width: min(560px, calc(100vw - 32px));
+	            padding: 12px 16px;
+	            border: 1px solid var(--border);
+	            border-radius: 12px;
+	            background: var(--text-primary);
+	            color: #fff;
+	            font-size: 13px;
+	            box-shadow: var(--shadow-lg);
+	            z-index: 200;
+	            display: none;
+	        }
+	        .download-toast.show { display: block; }
 
         /* Content */
         .content { min-width: 0; }
@@ -319,6 +336,8 @@
             border-left: 4px solid var(--text-muted);
             box-shadow: var(--shadow);
             overflow: hidden;
+            max-width: 100%;
+            min-width: 0;
         }
         .risk-item.lvl-high { border-left-color: var(--red); }
         .risk-item.lvl-medium { border-left-color: var(--orange); }
@@ -328,19 +347,22 @@
         .risk-body {
             padding: 24px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             gap: 28px;
             align-items: start;
+            min-width: 0;
         }
         .risk-col-l {
             display: flex;
             flex-direction: column;
             gap: 16px;
+            min-width: 0;
         }
         .risk-col-r {
             display: flex;
             flex-direction: column;
             gap: 16px;
+            min-width: 0;
         }
         .risk-meta {
             display: flex;
@@ -395,6 +417,8 @@
             background: var(--bg-subtle);
             border-radius: 0 8px 8px 0;
             margin-bottom: 8px;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
         .risk-desc {
             font-size: 14px;
@@ -409,6 +433,8 @@
             background: var(--accent-light);
             border-radius: 12px;
             padding: 20px;
+            min-width: 0;
+            max-width: 100%;
         }
         .suggestion-head {
             font-size: 14px;
@@ -421,7 +447,13 @@
             align-items: center;
             gap: 8px;
         }
-        .suggestion-text { font-size: 14px; line-height: 1.7; color: var(--text-secondary); }
+        .suggestion-text {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
 
         /* Analysis Box */
         .analysis-box {
@@ -449,6 +481,8 @@
             border: 1px solid var(--green-border);
             border-radius: 12px;
             padding: 20px;
+            min-width: 0;
+            max-width: 100%;
         }
         .rewrite-head {
             font-size: 14px;
@@ -461,7 +495,35 @@
             align-items: center;
             gap: 8px;
         }
-        .rewrite-text { font-size: 14px; line-height: 1.7; color: var(--text-secondary); }
+        .rewrite-text {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .code-fix {
+            margin: 0;
+            padding: 14px;
+            width: 100%;
+            max-width: 100%;
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 10px;
+            overflow-x: auto;
+            box-sizing: border-box;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .code-fix code {
+            display: block;
+            max-width: 100%;
+            white-space: inherit;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
 
         /* Fold */
         .fold-row {
@@ -847,6 +909,7 @@
 </div>
 
 {% elif task.status == 'completed' and report %}
+{% set is_code_review = task.review_type == 'code' or report.document_type == 'source_code' %}
 
 <!-- Mobile nav -->
 <nav class="mobile-nav">
@@ -875,19 +938,25 @@
         </ul>
         <div class="side-downloads">
             <p class="dl-head">下载报告</p>
-            <a href="/api/download/{{ task.id }}/report" class="dl-link">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                完整报告 JSON
-            </a>
-            <a href="/api/download/{{ task.id }}/report_md" class="dl-link">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                完整报告 Markdown
-            </a>
-            <a href="/api/download/{{ task.id }}/remediation" class="dl-link">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                整改任务清单
-            </a>
-        </div>
+	            <a href="/api/download/{{ task.id }}/report" class="dl-link" data-download-type="report">
+	                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+	                完整报告 JSON
+	            </a>
+	            <a href="/api/download/{{ task.id }}/report_md" class="dl-link" data-download-type="report_md">
+	                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+	                完整报告 Markdown
+	            </a>
+	            <a href="/api/download/{{ task.id }}/remediation" class="dl-link" data-download-type="remediation">
+	                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+	                整改任务清单
+	            </a>
+	            {% if task.result and task.result.code_suggestions %}
+	            <a href="/api/download/{{ task.id }}/code_suggestions" class="dl-link" data-download-type="code_suggestions">
+	                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l-3 3 3 3m8-6l3 3-3 3M13 5l-2 14"/></svg>
+	                代码修改建议
+	            </a>
+	            {% endif %}
+	        </div>
     </aside>
 
     <!-- Content -->
@@ -975,7 +1044,7 @@
                             </div>
                             <p class="risk-point">{{ item.risk_point }}</p>
                             {% if item.source_sections or item.evidence %}
-                            <p class="field-head">原文摘录</p>
+                            <p class="field-head">{{ '代码位置' if is_code_review else '原文摘录' }}</p>
                             {% if item.source_sections %}
                                 {% for s in item.source_sections[:2] %}
                                 <blockquote class="risk-quote">{{ s.snippet }}</blockquote>
@@ -987,7 +1056,7 @@
                             {% endif %}
                             {% endif %}
                             <div class="analysis-box">
-                                <p class="analysis-head">风险分析</p>
+                                <p class="analysis-head">{{ '代码风险分析' if is_code_review else '风险分析' }}</p>
                                 <p class="analysis-text">
                                     {% if item.missing_groups %}
                                         该处未明确 <strong>{{ item.missing_groups | join('、') }}</strong>，存在 {{ item.risk_point }}。
@@ -1001,12 +1070,17 @@
                         </div>
                         <div class="risk-col-r">
                             <div class="suggestion-box">
-                                <p class="suggestion-head">修改建议</p>
+                                <p class="suggestion-head">{{ '代码修改建议' if is_code_review else '修改建议' }}</p>
                                 <p class="suggestion-text">{{ item.suggestion }}</p>
                             </div>
-                            {% if item.rewritten_clause %}
+                            {% if is_code_review and item.fix_snippet %}
                             <div class="rewrite-box">
-                                <p class="rewrite-head">改写后条款</p>
+                                <p class="rewrite-head">建议修复代码</p>
+                                <pre class="code-fix"><code>{{ item.fix_snippet }}</code></pre>
+                            </div>
+                            {% elif item.rewritten_clause %}
+                            <div class="rewrite-box">
+                                <p class="rewrite-head">{{ '修复实现思路' if is_code_review else '改写后条款' }}</p>
                                 <p class="rewrite-text">{{ item.rewritten_clause }}</p>
                             </div>
                             {% endif %}
@@ -1103,9 +1177,10 @@
             <div class="section-head">
                 <h2 class="section-title">整改任务</h2>
                 <div style="display:flex;gap:10px;align-items:center">
-                    <span class="risk-badge rb-high">P1 {{ remediation.priority_counts.P1 }}</span>
-                    <span class="risk-badge rb-medium">P2 {{ remediation.priority_counts.P2 }}</span>
-                    <span class="risk-badge" style="background:var(--bg-subtle);color:var(--text-muted);border:1px solid var(--border)">P3 {{ remediation.priority_counts.P3 }}</span>
+	                    {% set pc = remediation.get('priority_counts', {}) %}
+	                    <span class="risk-badge rb-high">P1 {{ pc.get('P1', 0) }}</span>
+	                    <span class="risk-badge rb-medium">P2 {{ pc.get('P2', 0) }}</span>
+	                    <span class="risk-badge" style="background:var(--bg-subtle);color:var(--text-muted);border:1px solid var(--border)">P3 {{ pc.get('P3', 0) }}</span>
                 </div>
             </div>
             <div class="task-list">
@@ -1118,7 +1193,7 @@
                         </div>
                         {% if t.owner_hint %}<span class="task-owner">{{ t.owner_hint }}</span>{% endif %}
                     </div>
-                    <p class="task-obj">{{ t.objective }}</p>
+	                    <p class="task-obj">{{ t.objective or t.suggestion or t.implementation_hint }}</p>
                 </div>
                 {% endfor %}
             </div>
@@ -1194,10 +1269,13 @@
         <!-- Mobile downloads -->
         <div style="display:none;" class="mobile-dl">
             <p style="font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px">下载报告</p>
-            <a href="/api/download/{{ task.id }}/report" style="display:block;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);text-decoration:none">完整报告 JSON</a>
-            <a href="/api/download/{{ task.id }}/report_md" style="display:block;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);text-decoration:none">完整报告 Markdown</a>
-            <a href="/api/download/{{ task.id }}/remediation" style="display:block;padding:14px 0;font-size:14px;color:var(--text-secondary);text-decoration:none">整改任务清单</a>
-        </div>
+	            <a href="/api/download/{{ task.id }}/report" data-download-type="report" style="display:block;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);text-decoration:none">完整报告 JSON</a>
+	            <a href="/api/download/{{ task.id }}/report_md" data-download-type="report_md" style="display:block;padding:14px 0;border-bottom:1px solid var(--border);font-size:14px;color:var(--text-secondary);text-decoration:none">完整报告 Markdown</a>
+	            <a href="/api/download/{{ task.id }}/remediation" data-download-type="remediation" style="display:block;padding:14px 0;font-size:14px;color:var(--text-secondary);text-decoration:none">整改任务清单</a>
+	            {% if task.result and task.result.code_suggestions %}
+	            <a href="/api/download/{{ task.id }}/code_suggestions" data-download-type="code_suggestions" style="display:block;padding:14px 0;border-top:1px solid var(--border);font-size:14px;color:var(--text-secondary);text-decoration:none">代码修改建议</a>
+	            {% endif %}
+	        </div>
         <style>@media(max-width:900px){.mobile-dl{display:block!important;margin-top:32px}}</style>
 
     </div><!-- /content -->
@@ -1212,8 +1290,38 @@
         <p class="footer-note">个保法 · 网安法 · 数安法 · GDPR</p>
     </div>
 </footer>
+<div id="downloadToast" class="download-toast"></div>
 
 <script>
+    function apiUrl(path) {
+        try {
+            return new URL(path, window.location.href).toString();
+        } catch (_) {
+            return path;
+        }
+    }
+    function showDownloadToast(message) {
+        const toast = document.getElementById('downloadToast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 4200);
+    }
+    document.querySelectorAll('[data-download-type]').forEach(link => {
+        link.addEventListener('click', async event => {
+            event.preventDefault();
+            const type = link.dataset.downloadType;
+            try {
+                const res = await fetch(apiUrl(`/api/save-download/{{ task.id }}/${encodeURIComponent(type)}`), { method: 'POST' });
+                const data = await res.json();
+                if (!res.ok || !data.ok) throw new Error(data.error || '保存失败');
+                showDownloadToast(`已保存到：${data.path}`);
+            } catch (error) {
+                showDownloadToast(error?.message || '保存失败');
+                window.location.href = link.href;
+            }
+        });
+    });
+
     // Fold toggles
     document.querySelectorAll('.fold-toggle').forEach(btn => {
         btn.addEventListener('click', () => {

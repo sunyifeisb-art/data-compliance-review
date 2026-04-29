@@ -6,6 +6,8 @@ from __future__ import annotations
 """
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -28,6 +30,11 @@ OUTPUT_FOLDER = BASE_DIR / 'output'
 SCRIPTS_DIR = BASE_DIR / 'scripts'
 LOCAL_REGULATION_DB = PROJECT_ROOT / 'knowledge-base' / 'local-regulations.sqlite3'
 ALLOWED_EXTENSIONS = {'txt', 'md', 'doc', 'docx', 'pdf'}
+CODE_EXTENSIONS = {
+    'py', 'js', 'jsx', 'ts', 'tsx', 'java', 'go', 'php', 'rb', 'swift', 'kt',
+    'kts', 'c', 'cc', 'cpp', 'h', 'hpp', 'cs', 'rs', 'sh', 'bash', 'zsh',
+    'sql', 'html', 'css', 'json', 'yaml', 'yml', 'toml', 'env'
+}
 PYTHON_BIN = os.environ.get('COMPLIANCEAI_PYTHON') or sys.executable or 'python3'
 
 # 确保目录存在
@@ -65,7 +72,374 @@ def ensure_task_loaded(task_id: str) -> bool:
 
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    safe_name = Path(filename or '').name
+    return '.' in safe_name and safe_name.rsplit('.', 1)[1].lower() in (ALLOWED_EXTENSIONS | CODE_EXTENSIONS)
+
+
+def safe_upload_filename(filename: str) -> str:
+    name = Path(filename or '').name.strip() or 'upload.txt'
+    stem = Path(name).stem.strip() or 'upload'
+    suffix = Path(name).suffix.lower()
+    stem = re.sub(r'[^\w.-]+', '_', stem, flags=re.UNICODE).strip('._') or 'upload'
+    return f'{stem}{suffix}'
+
+
+def safe_download_filename(name: str) -> str:
+    stem = re.sub(r'[^\w.-]+', '_', (name or 'ComplianceAI').strip(), flags=re.UNICODE).strip('._')
+    return stem or 'ComplianceAI'
+
+
+def infer_review_type(filename: str, requested: str = '') -> str:
+    if requested in {'document', 'code'}:
+        return requested
+    suffix = Path(filename or '').suffix.lower().lstrip('.')
+    return 'code' if suffix in CODE_EXTENSIONS else 'document'
+
+
+def list_review_history(limit: int = 20) -> list[dict]:
+    history = []
+    for state_path in OUTPUT_FOLDER.glob('*/task_state.json'):
+        try:
+            state = json.loads(state_path.read_text(encoding='utf-8'))
+        except Exception:
+            continue
+        history.append({
+            'id': state.get('id') or state_path.parent.name,
+            'document_name': state.get('document_name') or '未命名任务',
+            'status': state.get('status', 'unknown'),
+            'review_type': state.get('review_type', 'document'),
+            'created_at': state.get('created_at', ''),
+            'completed_at': state.get('completed_at', ''),
+            'message': state.get('progress', {}).get('message', ''),
+        })
+    history.sort(key=lambda item: item.get('created_at') or item.get('completed_at') or '', reverse=True)
+    return history[:limit]
+
+
+def read_text_best_effort(path: Path) -> str:
+    data = path.read_bytes()
+    for encoding in ('utf-8', 'utf-8-sig', 'gb18030', 'latin-1'):
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return data.decode('utf-8', errors='replace')
+
+
+def line_snippet(lines: list[str], line_no: int, radius: int = 1) -> str:
+    start = max(1, line_no - radius)
+    end = min(len(lines), line_no + radius)
+    return '\n'.join(f'{idx}: {lines[idx - 1]}' for idx in range(start, end + 1))
+
+
+def code_fix_snippet_for_path(path_id: str) -> str:
+    snippets = {
+        'code_secret_exposure': '''// Server side only
+const analyticsKey = mustGetEnv('ANALYTICS_API_KEY');
+
+app.post('/api/analytics-token', requireLogin, async (req, res) => {
+  const token = await issueShortLivedToken({
+    userId: req.user.id,
+    scope: 'analytics:write',
+    ttlSeconds: 600,
+  });
+  res.json({ token });
+});
+
+// Client side
+const { token } = await fetch('/api/analytics-token', {
+  method: 'POST',
+  credentials: 'include',
+}).then(r => r.json());''',
+        'code_plain_http': '''const endpoint = new URL('/v1/profile', config.apiBaseUrl);
+
+if (endpoint.protocol !== 'https:' && endpoint.hostname !== 'localhost') {
+  throw new Error('Personal data endpoints must use HTTPS');
+}
+
+await fetch(endpoint, {
+  method: 'POST',
+  credentials: 'include',
+  body: JSON.stringify(minimizedPayload),
+});''',
+        'code_personal_info_notice': '''const purpose = 'account_verification';
+const allowed = await consentStore.hasConsent(userId, purpose);
+
+if (!allowed) {
+  return {
+    mode: 'basic',
+    message: '用户未授权，跳过该个人信息采集',
+  };
+}
+
+const payload = pickRequiredFields(formData, [
+  'phone',
+  'identityVerified',
+]);''',
+        'code_sensitive_logging': '''logger.info('profile_submit', {
+  requestId,
+  userId: hashId(userId),
+  phoneLast4: maskLast4(profile.phone),
+  hasIdCard: Boolean(profile.idCard),
+});
+
+// Never log raw phone, idCard, token, address, faceTemplate, contacts.''',
+        'code_local_retention': '''await secureStore.set('session_ref', sessionRef, {
+  ttlSeconds: 3600,
+  encrypt: true,
+});
+
+async function clearPersonalDataOnLogout(userId) {
+  await secureStore.removeMany([
+    `profile:${userId}`,
+    `contacts:${userId}`,
+    `location:${userId}`,
+  ]);
+}''',
+        'code_injection_surface': '''const actionHandlers = {
+  openProfile: renderProfile,
+  exportReport: exportReportSafely,
+};
+
+const handler = actionHandlers[userInput.action];
+if (!handler) throw new Error('Unsupported action');
+
+container.textContent = sanitizeDisplayText(userProvidedText);''',
+    }
+    return snippets.get(path_id, '')
+
+
+def add_code_item(items: list[dict], *, risk_point: str, risk_level: str, legal_basis: str,
+                  reason: str, suggestion: str, evidence: str, line_no: int,
+                  path_id: str, rewritten_clause: str = '', fix_snippet: str = '') -> None:
+    items.append({
+        'risk_point': risk_point,
+        'risk_level': risk_level,
+        'legal_basis': legal_basis,
+        'reason': reason,
+        'suggestion': suggestion,
+        'rewritten_clause': rewritten_clause,
+        'fix_snippet': fix_snippet or code_fix_snippet_for_path(path_id),
+        'evidence': [evidence],
+        'source_sections': [{
+            'page': 1,
+            'segment_index': line_no,
+            'label': f'代码第 {line_no} 行',
+            'snippet': evidence,
+        }],
+        'path_ids': [path_id],
+        'theme_name': '代码合规',
+    })
+
+
+def analyze_code_compliance(code: str, document_name: str) -> dict:
+    lines = code.splitlines() or ['']
+    items: list[dict] = []
+    joined_lower = code.lower()
+
+    secret_patterns = [
+        r'(?i)(api[_-]?key|secret|token|password|passwd|access[_-]?key)\s*[:=]\s*[\'"][^\'"]{8,}[\'"]',
+        r'-----BEGIN (?:RSA |EC |OPENSSH |)PRIVATE KEY-----',
+    ]
+    personal_terms = ('phone', 'mobile', '手机号', '身份证', 'idcard', 'location', 'gps', 'lat', 'lng',
+                      'address', 'email', '联系人', 'contacts', 'camera', 'microphone', 'face', '人脸')
+    consent_terms = ('consent', 'authorize', 'permission', 'privacy', 'opt-in', '同意', '授权', '隐私')
+
+    for idx, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        for pattern in secret_patterns:
+            if re.search(pattern, line):
+                add_code_item(
+                    items,
+                    risk_point='疑似硬编码密钥或敏感凭证',
+                    risk_level='高风险',
+                    legal_basis='《数据安全法》第27条；《网络安全法》第21条',
+                    reason='代码中出现疑似 API Key、Token、密码或私钥。此类凭证进入客户端、仓库或日志后，可能导致数据接口被越权调用。',
+                    suggestion='将密钥迁移到服务端环境变量或安全密钥管理服务；客户端只调用后端代理接口；立即轮换已暴露凭证，并在 CI 中加入密钥扫描。',
+                    rewritten_clause='改为从服务端环境变量读取，并通过后端授权接口下发短期令牌；不要在前端、移动端或公开仓库中保存长期密钥。',
+                    evidence=line_snippet(lines, idx),
+                    line_no=idx,
+                    path_id='code_secret_exposure',
+                )
+                break
+
+        if 'http://' in line and 'localhost' not in line and '127.0.0.1' not in line:
+            add_code_item(
+                items,
+                risk_point='接口或资源使用明文 HTTP',
+                risk_level='中风险',
+                legal_basis='《网络安全法》第21条；GB/T 35273 个人信息安全规范',
+                reason='明文 HTTP 传输可能暴露个人信息、鉴权参数或业务数据，尤其不适合登录、支付、位置、设备标识等处理链路。',
+                suggestion='统一改为 HTTPS；对历史接口做跳转或拒绝；移动端和桌面端增加明文流量拦截策略。',
+                rewritten_clause='将 URL 改为 https://，并在网络层拒绝非本地调试场景下的 http:// 请求。',
+                evidence=line_snippet(lines, idx),
+                line_no=idx,
+                path_id='code_plain_http',
+            )
+
+        if any(term in stripped.lower() for term in personal_terms):
+            window = '\n'.join(lines[max(0, idx - 4): min(len(lines), idx + 4)]).lower()
+            if not any(term in window or term in joined_lower[:1000] for term in consent_terms):
+                add_code_item(
+                    items,
+                    risk_point='个人信息采集缺少就近授权或告知痕迹',
+                    risk_level='中风险',
+                    legal_basis='《个人信息保护法》第6条、第13条、第17条',
+                    reason='代码疑似处理手机号、位置、设备、联系人、相机、麦克风、人脸等个人信息，但附近没有看到授权、告知、隐私开关或最小必要校验。',
+                    suggestion='在调用采集能力前增加用途说明、授权状态检查和拒绝后的替代路径；仅在业务必要时采集，并记录字段与目的映射。',
+                    rewritten_clause='在该调用前加入 consent/permission 检查；未授权时返回基础功能路径，不继续采集或上传该字段。',
+                    evidence=line_snippet(lines, idx),
+                    line_no=idx,
+                    path_id='code_personal_info_notice',
+                )
+
+        if re.search(r'(?i)(console\.log|print\(|logger\.|log\.)', line) and any(term in stripped.lower() for term in personal_terms + ('token', 'password', 'secret')):
+            add_code_item(
+                items,
+                risk_point='日志可能输出个人信息或敏感凭证',
+                risk_level='高风险',
+                legal_basis='《个人信息保护法》第51条；《数据安全法》第27条',
+                reason='调试日志中出现个人信息或敏感凭证字段，可能进入本地日志、云日志或第三方监控系统。',
+                suggestion='删除敏感字段日志；只保留脱敏后的最后四位、哈希或枚举状态；生产环境默认关闭调试日志。',
+                rewritten_clause='使用 maskSensitive(value) 后再输出，或仅记录 request_id、状态码、字段是否存在。',
+                evidence=line_snippet(lines, idx),
+                line_no=idx,
+                path_id='code_sensitive_logging',
+            )
+
+        if re.search(r'(?i)(localStorage|UserDefaults|SharedPreferences|NSUserDefaults|sqlite|writeFile|fs\.writeFile)', line) and any(term in stripped.lower() for term in personal_terms + ('token', 'password', 'secret')):
+            add_code_item(
+                items,
+                risk_point='本地持久化可能保存敏感数据',
+                risk_level='中风险',
+                legal_basis='《个人信息保护法》第51条；GB/T 35273 个人信息安全规范',
+                reason='代码疑似把个人信息或令牌写入本地存储。若未加密、未设置过期或未提供删除机制，会扩大泄露面。',
+                suggestion='改用系统安全存储或加密数据库；设置最短保存期限；退出登录、撤回授权或账号注销时同步清理。',
+                rewritten_clause='敏感字段只存短期会话标识；必要持久化数据使用 Keychain/Keystore 或加密存储，并添加清理函数。',
+                evidence=line_snippet(lines, idx),
+                line_no=idx,
+                path_id='code_local_retention',
+            )
+
+        if re.search(r'(?i)(eval\(|exec\(|new Function|innerHTML\s*=|dangerouslySetInnerHTML)', line):
+            add_code_item(
+                items,
+                risk_point='动态执行或不安全渲染可能放大数据泄露风险',
+                risk_level='中风险',
+                legal_basis='《网络安全法》第21条；《数据安全法》第27条',
+                reason='动态执行代码或直接渲染未净化内容，可能造成脚本注入，进而读取页面中的个人信息或会话令牌。',
+                suggestion='移除动态执行；对富文本使用可信白名单净化；避免把令牌、身份证号、手机号等敏感数据放在可被脚本读取的上下文。',
+                rewritten_clause='改为显式函数映射或安全模板渲染；渲染前使用 sanitizeHtml 白名单处理。',
+                evidence=line_snippet(lines, idx),
+                line_no=idx,
+                path_id='code_injection_surface',
+            )
+
+    seen = set()
+    deduped = []
+    for item in items:
+        key = (item['risk_point'], item['source_sections'][0]['segment_index'])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+
+    stats = {'高风险': 0, '中风险': 0, '建议优化': 0, '无': 0}
+    for item in deduped:
+        stats[item['risk_level']] = stats.get(item['risk_level'], 0) + 1
+
+    if not deduped:
+        deduped.append({
+            'risk_point': '未发现明显代码层数据合规风险',
+            'risk_level': '无',
+            'legal_basis': '代码静态规则审查',
+            'reason': '本次静态扫描未命中硬编码凭证、敏感日志、明文传输、个人信息采集缺少告知等规则。',
+            'suggestion': '仍建议结合运行时权限申请、接口文档、隐私政策和数据流图进行人工复核。',
+            'evidence': ['未命中高风险规则'],
+            'source_sections': [],
+            'path_ids': ['code_static_scan'],
+            'theme_name': '代码合规',
+        })
+        stats['无'] = 1
+
+    risk_total = sum(v for k, v in stats.items() if k != '无')
+    return {
+        'document_name': document_name,
+        'review_scope': '代码层数据合规风险审查',
+        'document_type': 'source_code',
+        'selected_review_paths': [
+            'code_secret_exposure',
+            'code_personal_info_notice',
+            'code_sensitive_logging',
+            'code_plain_http',
+            'code_local_retention',
+            'code_injection_surface',
+        ],
+        'summary': f'共发现 {risk_total} 个代码层风险/优化项，其中高风险 {stats.get("高风险", 0)} 个、中风险 {stats.get("中风险", 0)} 个、建议优化 {stats.get("建议优化", 0)} 个。',
+        'auto_recheck_triggered': False,
+        'items': deduped,
+    }
+
+
+def render_code_suggestions(report: dict) -> str:
+    lines = [
+        f'# {report.get("document_name", "代码审查")} 代码层修改建议',
+        '',
+        f'> {report.get("summary", "")}',
+        '',
+    ]
+    for idx, item in enumerate(report.get('items', []), start=1):
+        if item.get('risk_level') == '无':
+            continue
+        source = item.get('source_sections') or [{}]
+        label = source[0].get('label', '代码位置待确认')
+        lines.extend([
+            f'## {idx}. {item.get("risk_point", "风险项")}',
+            '',
+            f'- 风险等级：{item.get("risk_level", "")}',
+            f'- 位置：{label}',
+            f'- 修改建议：{item.get("suggestion", "")}',
+        ])
+        if item.get('rewritten_clause'):
+            lines.append(f'- 建议实现：{item["rewritten_clause"]}')
+        if item.get('fix_snippet'):
+            lines.extend([
+                '',
+                '```ts',
+                item['fix_snippet'],
+                '```',
+            ])
+        lines.extend(['', ''])
+    if len(lines) <= 4:
+        lines.append('本次静态扫描未生成必须修改项。')
+    return '\n'.join(lines).rstrip() + '\n'
+
+
+def enrich_code_report_for_display(report: dict) -> dict:
+    if report.get('document_type') != 'source_code':
+        return report
+    for item in report.get('items', []):
+        if item.get('fix_snippet'):
+            continue
+        path_ids = item.get('path_ids') or []
+        if path_ids:
+            item['fix_snippet'] = code_fix_snippet_for_path(path_ids[0])
+    return report
+
+
+def refresh_code_suggestions_file(task: dict) -> None:
+    result = task.get('result') or {}
+    report_path = result.get('report')
+    suggestions_path = result.get('code_suggestions')
+    if not report_path or not suggestions_path:
+        return
+    report_file = Path(report_path)
+    if not report_file.exists():
+        return
+    report = enrich_code_report_for_display(json.loads(report_file.read_text(encoding='utf-8')))
+    Path(suggestions_path).write_text(render_code_suggestions(report), encoding='utf-8')
 
 
 def get_risk_level_color(level):
@@ -457,10 +831,89 @@ def run_review_pipeline(task_id, input_path, document_name, is_text=False):
         save_task_state(task_id)
 
 
+def run_code_review_pipeline(task_id, input_path, document_name, is_text=False):
+    task = tasks[task_id]
+    work_dir = OUTPUT_FOLDER / task_id
+    work_dir.mkdir(parents=True, exist_ok=True)
+
+    def update_progress(step, message, status='running'):
+        task['progress'] = {
+            'step': step,
+            'total_steps': 4,
+            'message': message,
+            'status': status,
+        }
+        save_task_state(task_id)
+
+    try:
+        update_progress(1, '正在读取代码输入...')
+        code = input_path.read_text(encoding='utf-8') if is_text else read_text_best_effort(input_path)
+
+        update_progress(2, '正在扫描代码层合规风险...')
+        report = analyze_code_compliance(code, document_name)
+
+        update_progress(3, '正在生成代码层修改建议...')
+        report_path = work_dir / 'code_compliance_report.json'
+        suggestions_path = work_dir / 'code_change_suggestions.md'
+        remediation_path = work_dir / 'code_remediation_tasks.json'
+        report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+        suggestions_path.write_text(render_code_suggestions(report), encoding='utf-8')
+        priority_map = {'高风险': 'P1', '中风险': 'P2', '建议优化': 'P3'}
+        remediation_tasks = []
+        priority_counts = {'P1': 0, 'P2': 0, 'P3': 0}
+        for item in report.get('items', []):
+            if item.get('risk_level') == '无':
+                continue
+            priority = priority_map.get(item.get('risk_level'), 'P3')
+            priority_counts[priority] += 1
+            remediation_tasks.append({
+                'title': item.get('risk_point'),
+                'priority': priority,
+                'owner_hint': (item.get('source_sections') or [{}])[0].get('label', ''),
+                'objective': item.get('suggestion'),
+                'implementation_hint': item.get('rewritten_clause', ''),
+            })
+        remediation_path.write_text(json.dumps({
+            'document_name': document_name,
+            'priority_counts': priority_counts,
+            'tasks': remediation_tasks,
+        }, ensure_ascii=False, indent=2), encoding='utf-8')
+
+        task['status'] = 'completed'
+        task['completed_at'] = datetime.now().isoformat()
+        task['result'] = {
+            'report': str(report_path),
+            'report_markdown': str(suggestions_path),
+            'remediation': str(remediation_path),
+            'code_suggestions': str(suggestions_path),
+        }
+        task['progress'] = {
+            'step': 4,
+            'total_steps': 4,
+            'message': '代码审查完成',
+            'status': 'completed',
+        }
+        save_task_state(task_id)
+    except Exception as e:
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"ERROR in code task {task_id}: {error_detail}")
+        task['status'] = 'failed'
+        task['error'] = str(e)
+        task['error_detail'] = error_detail
+        task['progress'] = {
+            'step': task.get('progress', {}).get('step', 0),
+            'total_steps': 4,
+            'message': f'出错了: {str(e)}',
+            'status': 'error',
+        }
+        save_task_state(task_id)
+
+
 @app.route('/')
 def index():
     """首页 - 上传页面"""
-    return render_template('index.html')
+    return render_template('index.html', history=list_review_history())
 
 
 @app.route('/preview/a')
@@ -485,6 +938,7 @@ def upload_file():
     """处理文件上传或文本输入"""
     input_text = request.form.get('input_text', '').strip()
     uploaded_file = request.files.get('file')
+    requested_review_type = request.form.get('review_type', '').strip()
     document_name = derive_document_name(
         request.form.get('document_name', ''),
         input_text,
@@ -494,21 +948,24 @@ def upload_file():
     task_id = str(uuid.uuid4())[:8]
 
     if input_text:
+        review_type = infer_review_type('', requested_review_type)
         # 文本输入
-        temp_file = UPLOAD_FOLDER / f'{task_id}.txt'
+        temp_file = UPLOAD_FOLDER / f'{task_id}.{"code.txt" if review_type == "code" else "txt"}'
         temp_file.write_text(input_text, encoding='utf-8')
 
         tasks[task_id] = {
             'id': task_id,
             'document_name': document_name,
-            'input_type': 'text',
+            'input_type': 'code_text' if review_type == 'code' else 'text',
+            'review_type': review_type,
             'input_path': str(temp_file),
             'status': 'pending',
             'created_at': datetime.now().isoformat()
         }
 
         # 启动后台线程执行审查
-        thread = Thread(target=run_review_pipeline, args=(task_id, temp_file, document_name, True))
+        target = run_code_review_pipeline if review_type == 'code' else run_review_pipeline
+        thread = Thread(target=target, args=(task_id, temp_file, document_name, True))
         thread.start()
 
         return jsonify({'task_id': task_id})
@@ -523,21 +980,26 @@ def upload_file():
             return jsonify({'error': '不支持的文件类型'}), 400
 
         # 保存上传的文件
-        file_path = UPLOAD_FOLDER / f'{task_id}_{file.filename}'
+        safe_filename = safe_upload_filename(file.filename)
+        file_path = UPLOAD_FOLDER / f'{task_id}_{safe_filename}'
         file.save(file_path)
+        review_type = infer_review_type(file.filename, requested_review_type)
 
         tasks[task_id] = {
             'id': task_id,
             'document_name': document_name,
-            'input_type': 'file',
+            'input_type': 'code_file' if review_type == 'code' else 'file',
+            'review_type': review_type,
             'input_path': str(file_path),
             'original_filename': file.filename,
+            'stored_filename': safe_filename,
             'status': 'pending',
             'created_at': datetime.now().isoformat()
         }
 
         # 启动后台线程执行审查
-        thread = Thread(target=run_review_pipeline, args=(task_id, file_path, document_name, False))
+        target = run_code_review_pipeline if review_type == 'code' else run_review_pipeline
+        thread = Thread(target=target, args=(task_id, file_path, document_name, False))
         thread.start()
 
         return jsonify({'task_id': task_id})
@@ -578,6 +1040,11 @@ def get_progress(task_id):
     return Response(generate(), mimetype='text/event-stream')
 
 
+@app.route('/api/history')
+def get_history():
+    return jsonify({'items': list_review_history()})
+
+
 @app.route('/result/<task_id>')
 def result_page(task_id):
     """结果展示页面"""
@@ -594,7 +1061,7 @@ def result_page(task_id):
     if not report_path.exists():
         return '报告文件不存在', 404
 
-    report = json.loads(report_path.read_text(encoding='utf-8'))
+    report = enrich_code_report_for_display(json.loads(report_path.read_text(encoding='utf-8')))
 
     # 统计风险数量
     risk_stats = {'高风险': 0, '中风险': 0, '建议优化': 0, '无': 0}
@@ -638,7 +1105,7 @@ def get_result(task_id):
         })
 
     report_path = Path(task['result']['report'])
-    report = json.loads(report_path.read_text(encoding='utf-8'))
+    report = enrich_code_report_for_display(json.loads(report_path.read_text(encoding='utf-8')))
 
     return jsonify({
         'task_id': task_id,
@@ -672,12 +1139,17 @@ def download_file(task_id, file_type):
         'sdk_pack': ('sdk_pack', '.json'),
         'cross_border_pack': ('cross_border_pack', '.json'),
         'privacy_pack': ('privacy_pack', '.json'),
+        'code_suggestions': ('code_suggestions', '.md'),
     }
 
     if file_type not in file_mapping:
         return '不支持的文件类型', 400
 
     key, ext = file_mapping[file_type]
+    if key not in task.get('result', {}):
+        return '文件不存在', 404
+    if file_type == 'code_suggestions':
+        refresh_code_suggestions_file(task)
     file_path = Path(task['result'][key])
 
     if not file_path.exists():
@@ -688,6 +1160,50 @@ def download_file(task_id, file_type):
         as_attachment=True,
         download_name=f'{task["document_name"]}_{file_type}{ext}'
     )
+
+
+@app.route('/api/save-download/<task_id>/<file_type>', methods=['POST'])
+def save_download_file(task_id, file_type):
+    """桌面预览/原生壳内可靠保存：复制到下载文件夹，而不是依赖 WKWebView 附件下载。"""
+    if not ensure_task_loaded(task_id):
+        return jsonify({'error': '任务不存在'}), 404
+
+    task = tasks[task_id]
+    if task['status'] != 'completed':
+        return jsonify({'error': '审查尚未完成'}), 400
+
+    file_mapping = {
+        'report': ('report', '.json'),
+        'report_md': ('report_markdown', '.md'),
+        'remediation': ('remediation', '.json'),
+        'evidence': ('evidence', '.json'),
+        'sdk_pack': ('sdk_pack', '.json'),
+        'cross_border_pack': ('cross_border_pack', '.json'),
+        'privacy_pack': ('privacy_pack', '.json'),
+        'code_suggestions': ('code_suggestions', '.md'),
+    }
+    if file_type not in file_mapping:
+        return jsonify({'error': '不支持的文件类型'}), 400
+
+    key, ext = file_mapping[file_type]
+    if key not in task.get('result', {}):
+        return jsonify({'error': '文件不存在'}), 404
+    if file_type == 'code_suggestions':
+        refresh_code_suggestions_file(task)
+    source = Path(task['result'][key])
+    if not source.exists():
+        return jsonify({'error': '文件不存在'}), 404
+
+    downloads_dir = Path.home() / 'Downloads' / 'ComplianceAI'
+    downloads_dir.mkdir(parents=True, exist_ok=True)
+    base = safe_download_filename(task.get('document_name', 'ComplianceAI'))
+    target = downloads_dir / f'{base}_{file_type}{ext}'
+    counter = 1
+    while target.exists():
+        target = downloads_dir / f'{base}_{file_type}_{counter}{ext}'
+        counter += 1
+    shutil.copy2(source, target)
+    return jsonify({'ok': True, 'path': str(target)})
 
 
 @app.route('/dev/result')
