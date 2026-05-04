@@ -140,6 +140,16 @@ def list_review_history(limit: int = 20) -> list[dict]:
     return history[:limit]
 
 
+def safe_task_output_dir(task_id: str) -> Path | None:
+    if not re.fullmatch(r'[A-Za-z0-9_-]+', task_id or ''):
+        return None
+    path = (OUTPUT_FOLDER / task_id).resolve()
+    output_root = OUTPUT_FOLDER.resolve()
+    if path == output_root or output_root not in path.parents:
+        return None
+    return path
+
+
 def read_text_best_effort(path: Path) -> str:
     data = path.read_bytes()
     for encoding in ('utf-8', 'utf-8-sig', 'gb18030', 'latin-1'):
@@ -1182,6 +1192,19 @@ def get_progress(task_id):
 @app.route('/api/history')
 def get_history():
     return jsonify({'items': list_review_history()})
+
+
+@app.route('/api/history/<task_id>', methods=['DELETE'])
+def delete_history_item(task_id):
+    task_dir = safe_task_output_dir(task_id)
+    if task_dir is None:
+        return jsonify({'error': '任务 ID 不合法'}), 400
+    if not task_dir.exists():
+        tasks.pop(task_id, None)
+        return jsonify({'ok': True})
+    shutil.rmtree(task_dir)
+    tasks.pop(task_id, None)
+    return jsonify({'ok': True})
 
 
 @app.route('/result/<task_id>')
