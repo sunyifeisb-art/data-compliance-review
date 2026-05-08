@@ -262,8 +262,13 @@
             gap: 4px;
             padding: 4px;
             margin-bottom: 16px;
-            border: 1px solid var(--line);
-            background: var(--panel-strong);
+            border: 1px solid rgba(217, 209, 195, 0.5);
+            background: rgba(249, 244, 232, 0.6);
+            backdrop-filter: blur(16px) saturate(1.5);
+            -webkit-backdrop-filter: blur(16px) saturate(1.5);
+            border-radius: 14px;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.5), 0 2px 8px rgba(39,33,24,0.06);
+            position: relative;
         }
         .mode-btn {
             border: 0;
@@ -274,10 +279,38 @@
             font-size: 14px;
             font-weight: 800;
             cursor: pointer;
+            border-radius: 10px;
+            transition: color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            z-index: 1;
         }
         .mode-btn.active {
-            background: var(--teal);
-            color: #fffdf8;
+            color: var(--teal);
+        }
+        .toggle-indicator {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: rgba(255,255,255,0.85);
+            border-radius: 10px;
+            pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            will-change: transform;
+        }
+        .toggle-indicator.code-active {
+            transform: translateX(100%);
+        }
+        body.dark .review-toggle {
+            background: rgba(42, 42, 45, 0.6);
+            border-color: rgba(63, 63, 70, 0.5);
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.03), 0 2px 8px rgba(0,0,0,0.2);
+        }
+        body.dark .mode-btn.active {
+            background: rgba(94,234,212,0.18);
+            color: #5eead4;
         }
         .upload-zone {
             min-height: 210px;
@@ -545,6 +578,7 @@
             border: 1px solid var(--line);
             background: var(--panel);
             box-shadow: var(--shadow);
+            border-radius: 20px;
         }
         .modal-label {
             margin-bottom: 10px;
@@ -571,11 +605,13 @@
             overflow: hidden;
             background: var(--panel-strong);
             border: 1px solid var(--line);
+            border-radius: 4px;
         }
         .progress-fill {
             height: 100%;
             background: var(--teal);
             transition: width 0.15s linear;
+            border-radius: 4px;
         }
         .progress-meta {
             display: flex;
@@ -967,6 +1003,87 @@
         .history-action.danger:hover {
             color: #b42318;
         }
+
+        /* Custom Context Menu */
+        .context-menu {
+            position: fixed;
+            z-index: 1000;
+            min-width: 180px;
+            padding: 6px;
+            background: rgba(255, 253, 248, 0.95);
+            backdrop-filter: blur(20px) saturate(1.8);
+            -webkit-backdrop-filter: blur(20px) saturate(1.8);
+            border: 1px solid rgba(217, 209, 195, 0.6);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(39, 33, 24, 0.15), 0 2px 8px rgba(39, 33, 24, 0.08);
+            opacity: 0;
+            transform: scale(0.92) translateY(-4px);
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+        }
+        .context-menu.show {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+        }
+        .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ink);
+            cursor: pointer;
+            transition: background 0.12s ease;
+            white-space: nowrap;
+        }
+        .context-menu-item:hover {
+            background: var(--teal-soft);
+            color: var(--teal);
+        }
+        .context-menu-item svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            opacity: 0.7;
+        }
+        .context-menu-item:hover svg {
+            opacity: 1;
+        }
+        .context-menu-divider {
+            height: 1px;
+            margin: 4px 6px;
+            background: var(--line);
+            opacity: 0.6;
+        }
+        .context-menu-item.danger {
+            color: var(--red);
+        }
+        .context-menu-item.danger:hover {
+            background: rgba(180, 35, 24, 0.08);
+        }
+        body.dark .context-menu {
+            background: rgba(30, 30, 32, 0.95);
+            border-color: rgba(63, 63, 70, 0.6);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        body.dark .context-menu-item {
+            color: #e4e4e7;
+        }
+        body.dark .context-menu-item:hover {
+            background: rgba(94, 234, 212, 0.1);
+            color: #5eead4;
+        }
+        body.dark .context-menu-divider {
+            background: #3f3f46;
+        }
+        body.dark .context-menu-item.danger:hover {
+            background: rgba(180, 35, 24, 0.15);
+        }
+
         body.raven-layout .shell {
             max-width: none;
             margin: 0 0 0 264px;
@@ -1246,9 +1363,19 @@
             border-radius: 999px;
         }
         body.raven-layout .mode-btn.active {
-            background: #fff;
             color: #111;
+        }
+        body.raven-layout .toggle-indicator {
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: #fff;
+            border-radius: 999px;
             box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+        }
+        body.raven-layout .toggle-indicator.code-active {
+            transform: translateX(100%);
         }
         body.raven-layout .upload-zone {
             border-radius: 7px;
@@ -1319,8 +1446,15 @@
         body.dark.raven-layout .review-toggle { background: #2a2a2d; }
         body.dark.raven-layout .mode-btn { color: #a1a1aa; }
         body.dark.raven-layout .mode-btn.active {
-            background: #e4e4e7;
             color: #18181a;
+        }
+        body.dark.raven-layout .toggle-indicator {
+            background: #e4e4e7;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+        }
+        body.dark .toggle-indicator {
+            background: rgba(94,234,212,0.18);
+            box-shadow: none;
         }
         body.dark.raven-layout .upload-zone {
             background: #18181a;
@@ -1589,6 +1723,23 @@
         </div>
     </header>
 
+    <!-- Custom Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" data-action="view">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            查看结果
+        </div>
+        <div class="context-menu-item" data-action="rename">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            重命名
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" data-action="delete">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            删除任务
+        </div>
+    </div>
+
     <div class="shell">
         <main class="main">
             <section class="home-board show" id="homeBoard" aria-label="主界面">
@@ -1622,6 +1773,7 @@
                         <label class="field-label" id="nameLabel">文档名称</label>
                         <input type="text" id="documentName" class="field-input" placeholder="例：某 App 隐私政策 V2.1">
                         <div class="review-toggle" id="reviewToggle" role="tablist" aria-label="审查模式">
+                            <span class="toggle-indicator" id="toggleIndicator"></span>
                             <button class="mode-btn active" type="button" role="tab" aria-selected="true" data-review-type="document">文档审查</button>
                             <button class="mode-btn" type="button" role="tab" aria-selected="false" data-review-type="code">代码审查</button>
                         </div>
@@ -1811,6 +1963,8 @@
         });
     });
 
+    const toggleIndicator = document.getElementById('toggleIndicator');
+
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const nextType = btn.dataset.reviewType || 'document';
@@ -1822,6 +1976,8 @@
             btn.classList.add('active');
             btn.setAttribute('aria-selected', 'true');
             reviewType = nextType;
+            reviewToggle.dataset.active = nextType;
+            toggleIndicator.classList.toggle('code-active', nextType === 'code');
             currentFile = null;
             fileInput.value = '';
             selectedFile.style.display = 'none';
@@ -2097,6 +2253,92 @@
         }
     });
     closeError.addEventListener('click', () => errorModal.classList.remove('show'));
+
+    // ===== Custom Context Menu =====
+    const contextMenu = document.getElementById('contextMenu');
+    let contextTaskId = null;
+
+    function showContextMenu(x, y, taskId) {
+        contextTaskId = taskId;
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+        contextMenu.classList.add('show');
+    }
+
+    function hideContextMenu() {
+        contextMenu.classList.remove('show');
+        contextTaskId = null;
+    }
+
+    // Right-click on history items
+    historyList.addEventListener('contextmenu', event => {
+        const wrap = event.target.closest('.history-item-wrap');
+        if (!wrap) return;
+        event.preventDefault();
+        const taskId = wrap.dataset.taskId;
+        if (!taskId) return;
+
+        // Position menu within viewport
+        const menuWidth = 200;
+        const menuHeight = 140;
+        let x = event.clientX;
+        let y = event.clientY;
+        if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 10;
+        if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 10;
+
+        showContextMenu(x, y, taskId);
+    });
+
+    // Handle context menu actions
+    contextMenu.addEventListener('click', async event => {
+        const item = event.target.closest('.context-menu-item');
+        if (!item || !contextTaskId) return;
+        const action = item.dataset.action;
+        hideContextMenu();
+
+        const taskItem = historyItems.find(i => i.id === contextTaskId);
+        if (!taskItem) return;
+
+        if (action === 'view') {
+            const path = taskItem.product_type === 'desensitize'
+                ? `/desensitize/result/${encodeURIComponent(contextTaskId)}`
+                : `/result/${encodeURIComponent(contextTaskId)}`;
+            window.location.href = apiUrl(path);
+        } else if (action === 'rename') {
+            const newName = window.prompt('重命名任务:', taskItem.document_name || '未命名任务');
+            if (newName && newName.trim()) {
+                try {
+                    const res = await fetch(apiUrl(`/api/history/${encodeURIComponent(contextTaskId)}`), {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ document_name: newName.trim() })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || data.error) throw new Error(data.error || '重命名失败');
+                    await loadHistory();
+                } catch (error) {
+                    showErr(error?.message || '重命名失败');
+                }
+            }
+        } else if (action === 'delete') {
+            if (window.confirm('删除后会移除这个任务的本地输出文件，确定删除吗？')) {
+                try {
+                    await updateHistoryItem(contextTaskId, 'delete');
+                } catch (error) {
+                    showErr(error?.message || '删除失败');
+                }
+            }
+        }
+    });
+
+    // Hide context menu on click outside or scroll
+    document.addEventListener('click', event => {
+        if (!contextMenu.contains(event.target)) hideContextMenu();
+    });
+    document.addEventListener('scroll', hideContextMenu, true);
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') hideContextMenu();
+    });
 
     // History search
     const historySearch = document.getElementById('historySearch');

@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from threading import Thread
 
-from flask import Flask, render_template, request, jsonify, Response, send_file
+from flask import Flask, render_template, request, jsonify, Response, send_file, send_from_directory
 
 from desensitize_engine import (
     IMAGE_EXTENSIONS,
@@ -1458,6 +1458,194 @@ def save_desensitize_file(task_id, file_type):
     return save_download_file(task_id, file_type)
 
 
+@app.route('/api/task/<task_id>/preview-file')
+def preview_file(task_id):
+    """获取原始上传文件的预览 URL 和类型"""
+    if not ensure_task_loaded(task_id):
+        return jsonify({'error': '任务不存在'}), 404
+
+    task = tasks[task_id]
+    input_path = task.get('input_path', '')
+    if not input_path:
+        return jsonify({'error': '无上传文件'}), 404
+
+    file_path = Path(input_path)
+    if not file_path.exists():
+        return jsonify({'error': '文件不存在'}), 404
+
+    file_ext = file_path.suffix.lower().lstrip('.')
+    file_type = 'pdf' if file_ext == 'pdf' else 'docx' if file_ext in ('docx', 'doc') else 'text'
+
+    return jsonify({
+        'url': f'/uploads/{file_path.name}',
+        'type': file_type,
+        'filename': task.get('original_filename', file_path.name)
+    })
+
+
+@app.route('/api/task/<task_id>/locations')
+def task_locations(task_id):
+    """获取审查结果中所有风险点的位置映射数据"""
+    if not ensure_task_loaded(task_id):
+        return jsonify({'error': '任务不存在'}), 404
+
+    task = tasks[task_id]
+    if task['status'] != 'completed':
+        return jsonify({'error': '审查尚未完成'}), 400
+
+    report_path = task.get('result', {}).get('report')
+    if not report_path:
+        return jsonify({'error': '报告不存在'}), 404
+
+    report_path = Path(report_path)
+    if not report_path.exists():
+        return jsonify({'error': '报告不存在'}), 404
+
+    try:
+        report = json.loads(report_path.read_text(encoding='utf-8'))
+    except Exception:
+        return jsonify({'error': '报告解析失败'}), 500
+
+    input_path = task.get('input_path', '')
+    file_path = Path(input_path) if input_path else None
+    file_ext = file_path.suffix.lower().lstrip('.') if file_path and file_path.exists() else ''
+    file_type = 'pdf' if file_ext == 'pdf' else 'docx' if file_ext in ('docx', 'doc') else 'text'
+
+    locations = []
+    for idx, item in enumerate(report.get('items', []), start=1):
+        source_sections = item.get('source_sections', [])
+        if not source_sections:
+            continue
+
+        section = source_sections[0]
+        locations.append({
+            'risk_id': f'risk-{idx}',
+            'risk_point': item.get('risk_point', ''),
+            'risk_level': item.get('risk_level', '无'),
+            'page': section.get('page'),
+            'segment_index': section.get('segment_index'),
+            'label': section.get('label', ''),
+            'snippet': section.get('snippet', ''),
+        })
+
+    return jsonify({
+        'file_url': f'/uploads/{file_path.name}' if file_path and file_path.exists() else None,
+        'file_type': file_type,
+        'locations': locations
+    })
+
+
+@app.route('/api/task/<task_id>/preview-full')
+def preview_full_text(task_id):
+    """获取完整原文及风险点位置映射（高亮用）"""
+    if not ensure_task_loaded(task_id):
+        return jsonify({'error': '任务不存在'}), 404
+
+    task = tasks[task_id]
+    if task['status'] != 'completed':
+        return jsonify({'error': '审查尚未完成'}), 400
+
+    # 只对 .txt 文件读原文（文本输入），其他格式走 snippet 拼接
+    input_path = task.get('input_path', '')
+    full_text = ''
+    if input_path and Path(input_path).exists():
+        ext = Path(input_path).suffix.lower()
+        if ext in ('.txt', '.md', '.py', '.js', '.ts', '.css', '.html', '.json', '.csv'):
+            try:
+                full_text = Path(input_path).read_text(encoding='utf-8', errors='replace')
+            except Exception:
+                full_text = ''
+
+    # 读取报告
+    report_path = task.get('result', {}).get('report')
+    risks = []
+    if report_path and Path(report_path).exists():
+        try:
+            report = json.loads(Path(report_path).read_text(encoding='utf-8'))
+        except Exception:
+            report = {'items': []}
+    else:
+        report = {'items': []}
+
+    if full_text:
+        for idx, item in enumerate(report.get('items', []), start=1):
+            source_sections = item.get('source_sections', [])
+            if not source_sections:
+                continue
+            snippet = (source_sections[0].get('snippet') or '').strip()
+            if not snippet or len(snippet) < 10:
+                continue
+
+            # 直接在原文中查找，不标准化
+            pos = full_text.find(snippet)
+            if pos < 0:
+                # 标准化空白后重试
+                import re as _re
+                norm_t = _re.sub(r'\s+', ' ', full_text)
+                norm_s = _re.sub(r'\s+', ' ', snippet)
+                pos = norm_t.find(norm_s)
+                if pos < 0:
+                    continue
+                # 在前 30 字符位置附近精确查找
+                import re as _re
+                # 取 snippet 中第一段连续非空白做精确匹配
+                first_words = _re.search(r'[^\s]{5,}', snippet)
+                target = first_words.group(0) if first_words else snippet[:20]
+                start_pos = full_text.find(target)
+                if start_pos < 0:
+                    continue
+                end_pos = start_pos + len(target)
+            else:
+                start_pos = pos
+                end_pos = pos + len(snippet)
+
+            risks.append({
+                'risk_id': f'risk-{idx}',
+                'risk_point': item.get('risk_point', ''),
+                'risk_level': item.get('risk_level', '无'),
+                'snippet': snippet,
+                'start': start_pos,
+                'end': end_pos,
+            })
+
+    # 如果没有原文但有报告，降级为 snippet 拼接视图
+    if not full_text:
+        cursor = 0
+        for idx, item in enumerate(report.get('items', []), start=1):
+            source_sections = item.get('source_sections', [])
+            if not source_sections:
+                continue
+            snippet = (source_sections[0].get('snippet') or '').strip()
+            if not snippet or len(snippet) < 10:
+                continue
+            sep = '\n\n' if cursor > 0 else ''
+            start_pos = cursor + len(sep)
+            full_text += sep + snippet
+            cursor = len(full_text)
+            risks.append({
+                'risk_id': f'risk-{idx}',
+                'risk_point': item.get('risk_point', ''),
+                'risk_level': item.get('risk_level', '无'),
+                'snippet': snippet,
+                'start': start_pos,
+                'end': cursor,
+            })
+
+    if not full_text:
+        return jsonify({'error': '无可预览的内容'}), 404
+
+    return jsonify({
+        'full_text': full_text,
+        'risks': risks,
+        'total_risks': len(risks),
+    })
+
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    """提供上传文件的静态访问"""
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+
 @app.route('/dev/result')
 def dev_mock_result():
     """开发模式：用 test_output/demo_data 中的样例数据直接渲染结果页"""
@@ -1516,12 +1704,13 @@ if __name__ == '__main__':
     print("=" * 60)
     print("数据合规智能审查系统")
     print("=" * 60)
-    print(f"访问地址: http://127.0.0.1:5000")
+    PORT = 5566
+    print(f"访问地址: http://127.0.0.1:{PORT}")
     print("按 Ctrl+C 停止服务")
     print("=" * 60)
 
     # 自动打开浏览器
     import webbrowser
-    webbrowser.open('http://127.0.0.1:5000')
+    webbrowser.open(f'http://127.0.0.1:{PORT}')
 
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=PORT)
