@@ -250,7 +250,16 @@
         .sidebar-main {
             flex: 1 1 auto;
             min-height: 0;
+            display: flex;
+            flex-direction: column;
         }
+        .side-nav-wrap {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .side-nav-wrap::-webkit-scrollbar { width: 4px; }
+        .side-nav-wrap::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
         .sidebar-logo-row {
             display: flex;
             align-items: center;
@@ -1726,6 +1735,7 @@
                     <span class="theme-icon-dark">☾</span>
                 </button>
             </div>
+            <div class="side-nav-wrap">
             <p class="side-nav-title">导航</p>
             <ul class="side-nav-list">
                 <li><a href="#overview" data-nav="overview" class="active">概览</a></li>
@@ -1748,6 +1758,7 @@
                 {% if evidence and evidence.checklist %}<li><a href="#evidence" data-nav="evidence">整改材料准备</a></li>{% endif %}
                 {% if (sdk_pack and sdk_pack.enabled) or (cross_border_pack and cross_border_pack.enabled) or (privacy_pack and privacy_pack.enabled) %}<li><a href="#packs" data-nav="packs">场景化整改方案</a></li>{% endif %}
             </ul>
+            </div>
             <div class="side-downloads">
                 <p class="dl-head">导出</p>
 		            <a href="/api/download/{{ task.id }}/report" class="dl-link" data-download-type="report">

@@ -1,8 +1,8 @@
 // src/storage/settings.ts
 function normalizeSettings(raw) {
   return {
-    aiEnabled: Boolean(raw?.aiEnabled),
-    deepseekApiKey: raw?.deepseekApiKey?.trim() ?? "",
+    aiEnabled: raw?.aiEnabled !== false,
+    deepseekApiKey: raw?.deepseekApiKey?.trim() || "sk-9695b956c56f4d05a583be745076cd4c",
     deepseekBaseUrl: raw?.deepseekBaseUrl?.trim() || "https://api.deepseek.com",
     deepseekModel: raw?.deepseekModel?.trim() || "deepseek-chat"
   };

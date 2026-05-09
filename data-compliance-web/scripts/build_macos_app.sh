@@ -5,10 +5,11 @@ WEB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSPACE_ROOT="$(cd "$WEB_DIR/.." && pwd)"
 PROJECT_DIR="$WORKSPACE_ROOT/projects/data-compliance-ai-project-kit"
 HOST_PYTHON="$(command -v python3)"
-RUNTIME_PYTHON="/usr/bin/python3"
+RUNTIME_PYTHON="${COMPLIANCEAI_RUNTIME_PYTHON:-$HOST_PYTHON}"
 
 APP_NAME="ComplianceAI"
-ICON_SOURCE="${2:-$HOME/Desktop/complianceai-icon-v2.svg}"
+APP_DISPLAY_NAME="数律通"
+ICON_SOURCE="${2:-$WEB_DIR/static/logo.svg}"
 TARGET_ARCH="${3:-arm64}"
 BUILD_ID="$(date +%Y%m%d%H%M%S)"
 
@@ -36,6 +37,7 @@ ICONSET_DIR="$TMP_DIR/${APP_NAME}.iconset"
 PNG_BASE="$TMP_DIR/${APP_NAME}.png"
 STYLED_PNG="$TMP_DIR/${APP_NAME}-styled.png"
 TMP_PYTHON_LIB="$TMP_DIR/python-lib"
+VENV_SITE_PACKAGES="$(find "$WEB_DIR/venv/lib" -maxdepth 3 -type d -name site-packages 2>/dev/null | head -n 1 || true)"
 
 cleanup() {
   rm -rf "$TMP_DIR"
@@ -54,13 +56,20 @@ fi
 
 mkdir -p "$ICONSET_DIR" "$TMP_PYTHON_LIB"
 
-qlmanage -t -s 1024 -o "$TMP_DIR" "$ICON_SOURCE" >/dev/null 2>&1
-GENERATED_PNG="$(find "$TMP_DIR" -maxdepth 1 -name '*.png' | head -n 1)"
-if [ -z "$GENERATED_PNG" ]; then
-  echo "SVG 转 PNG 失败" >&2
-  exit 1
-fi
-mv "$GENERATED_PNG" "$PNG_BASE"
+case "${ICON_SOURCE##*.}" in
+  png|PNG|jpg|JPG|jpeg|JPEG)
+    cp "$ICON_SOURCE" "$PNG_BASE"
+    ;;
+  *)
+    qlmanage -t -s 1024 -o "$TMP_DIR" "$ICON_SOURCE" >/dev/null 2>&1
+    GENERATED_PNG="$(find "$TMP_DIR" -maxdepth 1 -name '*.png' | head -n 1)"
+    if [ -z "$GENERATED_PNG" ]; then
+      echo "图标转 PNG 失败" >&2
+      exit 1
+    fi
+    mv "$GENERATED_PNG" "$PNG_BASE"
+    ;;
+esac
 
 "$HOST_PYTHON" - <<'PY' "$PNG_BASE" "$STYLED_PNG"
 from pathlib import Path
@@ -72,10 +81,15 @@ dst = Path(sys.argv[2])
 
 base = Image.open(src).convert("RGBA")
 canvas_size = 1024
-icon_size = 860
-corner_radius = 188
-shadow_blur = 20
-shadow_offset = 10
+tile_size = 900
+logo_max_size = 690
+corner_radius = 196
+shadow_blur = 26
+shadow_offset = 12
+tile_left = (canvas_size - tile_size) // 2
+tile_top = (canvas_size - tile_size) // 2
+tile_right = tile_left + tile_size
+tile_bottom = tile_top + tile_size
 
 pixels = base.load()
 min_x = base.width
@@ -92,7 +106,7 @@ for y in range(base.height):
             max_y = max(max_y, y)
 
 if max_x >= min_x and max_y >= min_y:
-    pad = 2
+    pad = 16
     base = base.crop((
         max(0, min_x - pad),
         max(0, min_y - pad),
@@ -105,30 +119,43 @@ shadow_layer = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
 shadow_mask = Image.new("L", (canvas_size, canvas_size), 0)
 shadow_draw = ImageDraw.Draw(shadow_mask)
 
-left = (canvas_size - icon_size) // 2
-top = (canvas_size - icon_size) // 2
-right = left + icon_size
-bottom = top + icon_size
-
 shadow_draw.rounded_rectangle(
-    [left, top + shadow_offset, right, bottom + shadow_offset],
+    [tile_left, tile_top + shadow_offset, tile_right, tile_bottom + shadow_offset],
     radius=corner_radius,
-    fill=160,
+    fill=135,
 )
 shadow_layer.putalpha(shadow_mask.filter(ImageFilter.GaussianBlur(shadow_blur)))
 canvas.alpha_composite(shadow_layer)
 
-resized = base.resize((icon_size, icon_size), Image.LANCZOS)
-clip_mask = Image.new("L", (icon_size, icon_size), 0)
-ImageDraw.Draw(clip_mask).rounded_rectangle(
-    [0, 0, icon_size, icon_size],
+tile = Image.new("RGBA", (tile_size, tile_size), (255, 255, 255, 255))
+tile_draw = ImageDraw.Draw(tile)
+tile_draw.rounded_rectangle(
+    [0, 0, tile_size - 1, tile_size - 1],
+    radius=corner_radius,
+    outline=(224, 224, 219, 255),
+    width=2,
+)
+
+scale = min(logo_max_size / base.width, logo_max_size / base.height)
+logo_size = (
+    max(1, int(base.width * scale)),
+    max(1, int(base.height * scale)),
+)
+logo = base.resize(logo_size, Image.LANCZOS)
+logo_x = (tile_size - logo.width) // 2
+logo_y = (tile_size - logo.height) // 2 - 8
+tile.alpha_composite(logo, (logo_x, logo_y))
+
+tile_mask = Image.new("L", (tile_size, tile_size), 0)
+ImageDraw.Draw(tile_mask).rounded_rectangle(
+    [0, 0, tile_size, tile_size],
     radius=corner_radius,
     fill=255,
 )
-rounded_icon = Image.new("RGBA", (icon_size, icon_size), (0, 0, 0, 0))
-rounded_icon.paste(resized, (0, 0), clip_mask)
+rounded_tile = Image.new("RGBA", (tile_size, tile_size), (0, 0, 0, 0))
+rounded_tile.paste(tile, (0, 0), tile_mask)
 
-canvas.alpha_composite(rounded_icon, (left, top))
+canvas.alpha_composite(rounded_tile, (tile_left, tile_top))
 canvas.save(dst)
 PY
 
@@ -138,7 +165,11 @@ for size in 16 32 128 256 512; do
   sips -z "$retina" "$retina" "$STYLED_PNG" --out "$ICONSET_DIR/icon_${size}x${size}@2x.png" >/dev/null
 done
 
-"$RUNTIME_PYTHON" -m pip install --quiet --upgrade --no-compile --target "$TMP_PYTHON_LIB" -r "$WEB_DIR/requirements.txt"
+if [ -n "$VENV_SITE_PACKAGES" ] && [ -d "$VENV_SITE_PACKAGES/flask" ]; then
+  rsync -a "$VENV_SITE_PACKAGES/" "$TMP_PYTHON_LIB/"
+else
+  "$RUNTIME_PYTHON" -m pip install --quiet --upgrade --no-compile --target "$TMP_PYTHON_LIB" -r "$WEB_DIR/requirements.txt"
+fi
 
 rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
@@ -183,7 +214,7 @@ cat >"$APP_BUNDLE/Contents/Info.plist" <<PLIST
   <key>CFBundleName</key>
   <string>${APP_NAME}</string>
   <key>CFBundleDisplayName</key>
-  <string>${APP_NAME}</string>
+  <string>${APP_DISPLAY_NAME}</string>
   <key>CFBundleExecutable</key>
   <string>${APP_NAME}</string>
   <key>CFBundleIdentifier</key>
@@ -266,11 +297,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         mainMenu.addItem(appMenuItem)
 
         let appMenu = NSMenu()
-        let aboutItem = NSMenuItem(title: "关于 ComplianceAI", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        let aboutItem = NSMenuItem(title: "关于 数律通", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(aboutItem)
         appMenu.addItem(NSMenuItem.separator())
 
-        let hideItem = NSMenuItem(title: "隐藏 ComplianceAI", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        let hideItem = NSMenuItem(title: "隐藏 数律通", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         hideItem.keyEquivalentModifierMask = [.command]
         appMenu.addItem(hideItem)
 
@@ -282,7 +313,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         appMenu.addItem(showAllItem)
         appMenu.addItem(NSMenuItem.separator())
 
-        let quitItem = NSMenuItem(title: "退出 ComplianceAI", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: "退出 数律通", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         quitItem.keyEquivalentModifierMask = [.command]
         appMenu.addItem(quitItem)
 
@@ -300,7 +331,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         let rect = NSRect(x: 0, y: 0, width: 1440, height: 960)
         window = NSWindow(
             contentRect: rect,
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -308,9 +339,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         window.backgroundColor = .white
         window.title = ""
         window.titleVisibility = .hidden
-        window.titlebarAppearsTransparent = false
+        window.titlebarAppearsTransparent = true
+        window.isMovableByWindowBackground = true
         if #available(macOS 11.0, *) {
-            window.toolbarStyle = .unifiedCompact
+            window.toolbarStyle = .unified
         }
         window.center()
         window.minSize = NSSize(width: 1200, height: 820)
@@ -347,10 +379,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     private func startServer() {
         let process = Process()
         process.currentDirectoryURL = URL(fileURLWithPath: webDir)
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
+        process.executableURL = URL(fileURLWithPath: "${RUNTIME_PYTHON}")
         process.arguments = [webDir + "/server_entry.py", "--port", String(port)]
         var env = ProcessInfo.processInfo.environment
-        env["COMPLIANCEAI_PYTHON"] = "/usr/bin/python3"
+        env["COMPLIANCEAI_PYTHON"] = "${RUNTIME_PYTHON}"
         env["PYTHONUNBUFFERED"] = "1"
         env["PYTHONPATH"] = pythonLib
         process.environment = env
@@ -399,7 +431,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     private func showFatal(_ message: String) -> Never {
         let alert = NSAlert()
         alert.alertStyle = .critical
-        alert.messageText = "ComplianceAI 启动失败"
+        alert.messageText = "数律通启动失败"
         alert.informativeText = message
         alert.runModal()
         NSApp.terminate(nil)

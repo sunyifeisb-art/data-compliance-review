@@ -4,6 +4,22 @@
 
 ---
 
+[2026-05-09 21:58] — 你 — 封装数律通 macOS 原生应用
+
+- 更新 macOS App 打包脚本：支持直接使用 PNG/JPG/SVG 图标源，并将图标等比居中封装为 macOS 圆角正方形 `.icns`。
+- 桌面壳切换为更原生的 full-size content view，隐藏标题文字并使用透明标题栏，避免呈现浏览器面板感。
+- App 显示名改为「数律通」，菜单与启动失败提示同步改为中文。
+- 打包流程优先复用项目现有 venv 依赖，避免系统 Python 3.9 拉取 `spacy/thinc` 依赖失败。
+- 已生成本机 Apple Silicon 版本：`~/Desktop/数律通.app` 与 `~/Desktop/数律通.dmg`。
+- **文件改动**：`data-compliance-web/scripts/build_macos_app.sh`、`CHANGELOG.md`
+
+[2026-05-09 21:37] — 你 — 扩充产品首页并加入 GitHub 直达入口
+
+- 首页从单屏封面扩展为可向下滚动的产品介绍页，新增产品优势、覆盖场景、工作流和开源仓库说明区块。
+- 首屏和底部开源区均新增 GitHub 按钮，直达 `https://github.com/AiYuSherry/data-compliance-review`。
+- 新增响应式、暗色模式和滚动动效，确保首页扩展内容在桌面和移动端都能顺畅浏览。
+- **文件改动**：`data-compliance-web/templates/index.html`、`TEAM_STATUS.md`、`CHANGELOG.md`
+
 [2026-05-09 19:50] — 你 — 脱敏结果页重构：系统字体、黑白极简、暗色模式
 
 - 脱敏结果页全面重构：移除 Google Fonts 依赖，改用系统原生字体栈（SF Pro / PingFang SC）；配色从 SaaS 蓝白（`#4f46e5`）改为黑白极简（`#111111`）；新增完整暗色模式支持

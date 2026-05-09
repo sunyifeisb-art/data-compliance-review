@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数据合规智能审查系统</title>
+    <title>数律通</title>
+    <link rel="icon" href="/static/logo.svg" type="image/svg+xml">
     <style>
         :root {
             --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -1180,6 +1181,20 @@
             line-height: 1.2;
             font-weight: 720;
             letter-spacing: 0.04em;
+            color: #161a1d;
+        }
+        .home-headline .char {
+            display: inline-block;
+            transition: color 0.15s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: default;
+        }
+        .home-headline .char:hover {
+            color: #006d6a;
+            transform: translateY(-6px) scale(1.1);
+        }
+        .home-headline .char:active {
+            transform: translateY(-2px) scale(0.95);
+            transition-duration: 0.08s;
         }
         .home-english {
             max-width: 28ch;
@@ -1194,7 +1209,12 @@
             justify-content: center;
             gap: 12px;
         }
-        .home-quick button {
+        .home-quick button,
+        .home-quick a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             min-width: 164px;
             min-height: 56px;
             padding: 0 18px;
@@ -1205,12 +1225,364 @@
             font: inherit;
             font-size: 15px;
             font-weight: 700;
+            line-height: 1;
+            text-decoration: none;
             cursor: pointer;
             box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background 0.3s ease;
         }
-        .home-quick button.secondary {
+        .home-quick button:hover,
+        .home-quick a:hover {
+            transform: translateY(-4px) scale(1.04);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+        }
+        .home-quick button:active,
+        .home-quick a:active {
+            transform: translateY(-1px) scale(0.97);
+            transition-duration: 0.08s;
+        }
+        .home-quick button.secondary,
+        .home-quick a.secondary {
             background: #fff;
             color: #111;
+        }
+        .home-quick button.secondary:hover,
+        .home-quick a.secondary:hover {
+            background: #f5f5f5;
+        }
+        .home-quick a.github-link {
+            min-width: 178px;
+            border-color: #111;
+            background: transparent;
+            color: #111;
+            box-shadow: none;
+        }
+        .home-quick a.github-link:hover {
+            background: #111;
+            color: #fff;
+        }
+        .home-quick svg {
+            width: 17px;
+            height: 17px;
+            flex-shrink: 0;
+        }
+        .home-about {
+            position: relative;
+            z-index: 1;
+            padding: 72px 56px 88px;
+            background: #fff;
+            border-top: 1px solid #dfdfda;
+        }
+        .home-section {
+            max-width: 1160px;
+            margin: 0 auto;
+        }
+        .home-section + .home-section {
+            margin-top: 78px;
+        }
+        .home-section-head {
+            display: grid;
+            grid-template-columns: minmax(0, 0.72fr) minmax(280px, 0.28fr);
+            gap: 32px;
+            align-items: end;
+            margin-bottom: 28px;
+        }
+        .home-section-label {
+            color: #8a7e70;
+            font-size: 13px;
+            font-weight: 760;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .home-section-title {
+            margin-top: 10px;
+            max-width: 760px;
+            color: #111;
+            font-family: var(--font-display);
+            font-size: clamp(32px, 4vw, 54px);
+            line-height: 1.08;
+            font-weight: 720;
+            letter-spacing: 0;
+        }
+        .home-section-intro {
+            color: #6f675f;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        .advantage-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            border: 1px solid #d2d2ce;
+            background: #f7f7f4;
+        }
+        .advantage-item {
+            position: relative;
+            min-height: 238px;
+            padding: 24px;
+            border-right: 1px solid #d2d2ce;
+            background: #fff;
+            overflow: hidden;
+            transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+        }
+        .advantage-item:last-child {
+            border-right: 0;
+        }
+        .advantage-item::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0,109,106,0.1), transparent 42%);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 220ms ease;
+        }
+        .advantage-item:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 18px 42px rgba(0,0,0,0.1);
+            border-color: #111;
+            z-index: 2;
+        }
+        .advantage-item:hover::after {
+            opacity: 1;
+        }
+        .advantage-icon,
+        .workflow-index {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            background: #111;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 800;
+            transition: transform 220ms ease, background 220ms ease;
+        }
+        .advantage-icon svg {
+            width: 19px;
+            height: 19px;
+        }
+        .advantage-item:hover .advantage-icon,
+        .workflow-step:hover .workflow-index {
+            transform: scale(1.08) rotate(-4deg);
+        }
+        .advantage-item h3,
+        .scenario-item h3,
+        .workflow-step h3 {
+            margin-top: 22px;
+            color: #111;
+            font-size: 20px;
+            line-height: 1.25;
+            font-weight: 720;
+        }
+        .advantage-item p,
+        .scenario-item p,
+        .workflow-step p {
+            margin-top: 12px;
+            color: #6f675f;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        .scenario-strip {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 18px;
+        }
+        .scenario-panel {
+            min-height: 460px;
+            padding: 30px;
+            border: 1px solid #d2d2ce;
+            border-radius: 10px;
+            background:
+                linear-gradient(150deg, rgba(0,109,106,0.12), transparent 42%),
+                #f5f4ef;
+            background-size: 140% 140%;
+            animation: scenarioGlow 9s ease-in-out infinite alternate;
+        }
+        .scenario-panel h3 {
+            max-width: 580px;
+            color: #111;
+            font-family: var(--font-display);
+            font-size: clamp(28px, 3vw, 42px);
+            line-height: 1.12;
+            font-weight: 720;
+        }
+        .scenario-panel p {
+            max-width: 560px;
+            margin-top: 18px;
+            color: #5f574f;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        .scenario-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 44px;
+        }
+        .scenario-metric {
+            min-height: 118px;
+            padding: 18px;
+            border: 1px solid rgba(17,17,17,0.12);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.72);
+            transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+        }
+        .scenario-metric:hover {
+            transform: translateY(-5px);
+            border-color: rgba(17,17,17,0.38);
+            box-shadow: 0 14px 32px rgba(0,0,0,0.08);
+        }
+        .scenario-metric strong {
+            display: block;
+            color: #111;
+            font-size: 28px;
+            line-height: 1;
+        }
+        .scenario-metric span {
+            display: block;
+            margin-top: 12px;
+            color: #6f675f;
+            font-size: 13px;
+            line-height: 1.45;
+            font-weight: 650;
+        }
+        .scenario-list {
+            display: grid;
+            gap: 12px;
+        }
+        .scenario-item {
+            min-height: 145px;
+            padding: 22px;
+            border: 1px solid #d2d2ce;
+            border-radius: 10px;
+            background: #fff;
+            transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+        }
+        .scenario-item:hover {
+            transform: translateX(8px);
+            border-color: #111;
+            box-shadow: 0 16px 34px rgba(0,0,0,0.08);
+        }
+        .workflow-rail {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .workflow-step {
+            position: relative;
+            min-height: 210px;
+            padding: 24px;
+            border: 1px solid #d2d2ce;
+            border-radius: 10px;
+            background: #fff;
+            overflow: hidden;
+            transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+        }
+        .workflow-step::before {
+            content: "";
+            position: absolute;
+            left: 24px;
+            right: 24px;
+            bottom: 0;
+            height: 3px;
+            background: #111;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 260ms ease;
+        }
+        .workflow-step:hover {
+            transform: translateY(-8px);
+            border-color: #111;
+            box-shadow: 0 18px 42px rgba(0,0,0,0.1);
+        }
+        .workflow-step:hover::before {
+            transform: scaleX(1);
+        }
+        .open-source-band {
+            display: grid;
+            grid-template-columns: minmax(0, 0.74fr) auto;
+            gap: 32px;
+            align-items: center;
+            padding: 30px;
+            border: 1px solid #111;
+            border-radius: 10px;
+            background: #111;
+            color: #fff;
+        }
+        .open-source-band h2 {
+            font-family: var(--font-display);
+            font-size: clamp(28px, 3vw, 44px);
+            line-height: 1.12;
+            font-weight: 720;
+        }
+        .open-source-band p {
+            max-width: 780px;
+            margin-top: 12px;
+            color: rgba(255,255,255,0.72);
+            font-size: 15px;
+            line-height: 1.8;
+        }
+        .open-source-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 52px;
+            padding: 0 20px;
+            border: 1px solid rgba(255,255,255,0.26);
+            border-radius: 999px;
+            background: #fff;
+            color: #111;
+            text-decoration: none;
+            font-weight: 760;
+            white-space: nowrap;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.18);
+            transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease, color 0.22s ease;
+        }
+        .open-source-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 18px 34px rgba(0,0,0,0.24);
+            background: #f0f0ed;
+        }
+        .open-source-link:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+        }
+        .open-source-link:focus-visible {
+            outline: 3px solid rgba(255,255,255,0.5);
+            outline-offset: 4px;
+        }
+        .open-source-link svg {
+            width: 17px;
+            height: 17px;
+        }
+        .motion-ready .reveal-item {
+            opacity: 0;
+            transform: translateY(34px);
+            transition: opacity 620ms ease, transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
+            transition-delay: var(--reveal-delay, 0ms);
+        }
+        .motion-ready .reveal-item.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @keyframes scenarioGlow {
+            from { background-position: 0% 0%; }
+            to { background-position: 100% 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .scenario-panel {
+                animation: none;
+            }
+            .motion-ready .reveal-item,
+            .advantage-item,
+            .scenario-item,
+            .scenario-metric,
+            .workflow-step,
+            .open-source-link {
+                transition: none;
+            }
         }
         .home-visual {
             position: relative;
@@ -1222,6 +1594,11 @@
                 linear-gradient(180deg, #f4f1ea 0%, #fff 100%);
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 22px 50px rgba(0,0,0,0.08);
             overflow: hidden;
+            transition: box-shadow 0.4s ease, transform 0.4s ease;
+        }
+        .home-visual:hover {
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 30px 70px rgba(0,0,0,0.12);
+            transform: scale(1.008);
         }
         .home-visual::before,
         .home-visual::after {
@@ -1271,8 +1648,14 @@
             font-size: 12px;
             font-weight: 700;
             letter-spacing: 0.06em;
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+            cursor: default;
         }
-        .home-visual-card {
+        .home-visual-meta span:hover {
+            transform: translateX(6px) scale(1.06);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+        }
+.home-visual-card {
             position: absolute;
             right: 18px;
             top: 18px;
@@ -1290,10 +1673,14 @@
             margin-top: 10px;
             border-radius: 999px;
             background: #ece7de;
+            transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1), background 0.3s, transform 0.3s;
         }
         .home-visual-card .card-line.short { width: 62%; }
         .home-visual-card .card-line.mid { width: 78%; }
         .home-visual-card .card-line.full { width: 100%; }
+        .home-visual-card:hover .card-line.full { width: 100%; background: #006d6a; }
+        .home-visual-card:hover .card-line.mid { width: 88%; background: #006d6a; }
+        .home-visual-card:hover .card-line.short { width: 72%; background: #006d6a; }
         .home-actions { display: none; }
         body.raven-layout .main {
             display: block;
@@ -1484,6 +1871,7 @@
         }
         body.dark.raven-layout .home-kicker { color: #a1a1aa; }
         body.dark.raven-layout .home-headline { color: #e4e4e7; }
+body.dark.raven-layout .home-headline .char:hover { color: #5ee4e0; }
         body.dark.raven-layout .home-english { color: #a1a1aa; }
         body.dark.raven-layout .home-visual {
             border-color: #3f3f46;
@@ -1515,6 +1903,95 @@
             background: transparent;
             color: #e4e4e7;
             border-color: #52525b;
+        }
+        body.dark.raven-layout .home-quick a.github-link {
+            background: transparent;
+            color: #e4e4e7;
+            border-color: #52525b;
+        }
+        body.dark.raven-layout .home-quick a.github-link:hover {
+            background: #e4e4e7;
+            color: #18181a;
+            border-color: #e4e4e7;
+        }
+        body.dark.raven-layout .home-about {
+            background: #18181a;
+            border-top-color: #3f3f46;
+        }
+        body.dark.raven-layout .home-section-label,
+        body.dark.raven-layout .home-section-intro,
+        body.dark.raven-layout .advantage-item p,
+        body.dark.raven-layout .scenario-item p,
+        body.dark.raven-layout .workflow-step p {
+            color: #a1a1aa;
+        }
+        body.dark.raven-layout .home-section-title,
+        body.dark.raven-layout .advantage-item h3,
+        body.dark.raven-layout .scenario-item h3,
+        body.dark.raven-layout .workflow-step h3,
+        body.dark.raven-layout .scenario-panel h3,
+        body.dark.raven-layout .scenario-metric strong {
+            color: #e4e4e7;
+        }
+        body.dark.raven-layout .advantage-grid,
+        body.dark.raven-layout .advantage-item,
+        body.dark.raven-layout .scenario-item,
+        body.dark.raven-layout .workflow-step {
+            background: #242426;
+            border-color: #3f3f46;
+        }
+        body.dark.raven-layout .advantage-item:hover,
+        body.dark.raven-layout .scenario-item:hover,
+        body.dark.raven-layout .workflow-step:hover {
+            border-color: #e4e4e7;
+            box-shadow: 0 18px 42px rgba(0,0,0,0.24);
+        }
+        body.dark.raven-layout .workflow-step::before {
+            background: #e4e4e7;
+        }
+        body.dark.raven-layout .advantage-item {
+            border-right-color: #3f3f46;
+        }
+        body.dark.raven-layout .advantage-icon,
+        body.dark.raven-layout .workflow-index {
+            background: #e4e4e7;
+            color: #18181a;
+        }
+        body.dark.raven-layout .scenario-panel {
+            border-color: #3f3f46;
+            background: linear-gradient(150deg, rgba(94,234,212,0.08), transparent 42%), #1e1e20;
+        }
+        body.dark.raven-layout .scenario-panel p,
+        body.dark.raven-layout .scenario-metric span {
+            color: #a1a1aa;
+        }
+        body.dark.raven-layout .scenario-metric {
+            border-color: #3f3f46;
+            background: rgba(36,36,38,0.82);
+        }
+        body.dark.raven-layout .scenario-metric:hover {
+            border-color: #71717a;
+            box-shadow: 0 14px 32px rgba(0,0,0,0.22);
+        }
+        body.dark.raven-layout .open-source-band {
+            background: #e4e4e7;
+            border-color: #e4e4e7;
+            color: #18181a;
+        }
+        body.dark.raven-layout .open-source-band p {
+            color: #52525b;
+        }
+        body.dark.raven-layout .open-source-link {
+            background: #18181a;
+            border-color: #18181a;
+            color: #e4e4e7;
+        }
+        body.dark.raven-layout .open-source-link:hover {
+            background: #000;
+            color: #fff;
+        }
+        body.dark.raven-layout .open-source-link:focus-visible {
+            outline-color: rgba(24,24,26,0.42);
         }
         body.dark.raven-layout .new-task {
             background: #e4e4e7;
@@ -1604,10 +2081,86 @@
             .home-visual {
                 min-height: 420px;
             }
+            .home-about {
+                padding: 54px 22px 70px;
+            }
+            .home-section-head,
+            .scenario-strip,
+            .open-source-band {
+                grid-template-columns: 1fr;
+            }
+            .advantage-grid,
+            .workflow-rail {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .advantage-item:nth-child(2) {
+                border-right: 0;
+            }
+            .advantage-item:nth-child(1),
+            .advantage-item:nth-child(2) {
+                border-bottom: 1px solid #d2d2ce;
+            }
+            body.dark.raven-layout .advantage-item:nth-child(1),
+            body.dark.raven-layout .advantage-item:nth-child(2) {
+                border-bottom-color: #3f3f46;
+            }
+            .scenario-metrics {
+                grid-template-columns: 1fr;
+            }
+            .open-source-link {
+                width: fit-content;
+            }
         .home-stage {
             min-height: auto;
             padding: 28px 18px 32px;
         }
+        }
+        @media (max-width: 620px) {
+            .home-stage {
+                padding: 28px 18px 34px;
+            }
+            .home-quick {
+                width: 100%;
+            }
+            .home-quick button,
+            .home-quick a {
+                width: 100%;
+            }
+            .home-about {
+                padding: 42px 16px 58px;
+            }
+            .home-section + .home-section {
+                margin-top: 56px;
+            }
+            .home-section-head {
+                gap: 16px;
+            }
+            .advantage-grid,
+            .workflow-rail {
+                grid-template-columns: 1fr;
+            }
+            .advantage-item,
+            .advantage-item:nth-child(2) {
+                border-right: 0;
+                border-bottom: 1px solid #d2d2ce;
+            }
+            .advantage-item:last-child {
+                border-bottom: 0;
+            }
+            body.dark.raven-layout .advantage-item,
+            body.dark.raven-layout .advantage-item:nth-child(2) {
+                border-bottom-color: #3f3f46;
+            }
+            .scenario-panel {
+                min-height: auto;
+                padding: 22px;
+            }
+            .open-source-band {
+                padding: 24px;
+            }
+            .open-source-link {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -1748,12 +2301,17 @@
                 <div class="home-stage">
                     <div class="home-stage-grid">
                         <div class="home-copy">
+                            <img src="/static/brand-logo.png" alt="ComplianceAI" style="width:200px;height:auto;margin-bottom:16px;display:block;">
                             <p class="home-kicker">Compliance Desk</p>
-                            <h1 class="home-headline">让合规审查和呼吸一样简单。</h1>
+                            <h1 class="home-headline"><span class="char">让</span><span class="char">合</span><span class="char">规</span><span class="char">审</span><span class="char">查</span><span class="char">和</span><span class="char">呼</span><span class="char">吸</span><span class="char">一</span><span class="char">样</span><span class="char">简</span><span class="char">单</span><span class="char">。</span></h1>
                             <p class="home-english">Compliance review and masking, made immediate.</p>
                             <div class="home-quick" aria-label="快速开始">
                                 <button class="secondary" type="button" data-home-action="desensitize">数据脱敏</button>
                                 <button type="button" data-home-action="review">合规审查</button>
+                                <a class="github-link" href="https://github.com/AiYuSherry/data-compliance-review" target="_blank" rel="noopener noreferrer" aria-label="打开项目 GitHub 仓库">
+                                    <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5A12 12 0 0 0 8.2 23.9c.6.1.8-.2.8-.6v-2.1c-3.3.7-4-1.4-4-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.4-1.3-5.4-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.6 4.6 18.6 5 18.6 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.4 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
+                                    GitHub
+                                </a>
                             </div>
                         </div>
                         <div class="home-visual" aria-hidden="true">
@@ -1768,6 +2326,129 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                <div class="home-about">
+                    <section class="home-section" aria-labelledby="homeAdvantageTitle">
+                        <div class="home-section-head">
+                            <div>
+                                <p class="home-section-label">Why it works</p>
+                                <h2 class="home-section-title" id="homeAdvantageTitle">少翻文件，多看结论。</h2>
+                            </div>
+                            <p class="home-section-intro">数律通把文档审查、代码扫描、数据脱敏和报告导出放在同一张工作台里，适合法务、产品、研发在上线前快速发现风险并形成整改材料。</p>
+                        </div>
+                        <div class="advantage-grid">
+                            <article class="advantage-item">
+                                <div class="advantage-icon" aria-hidden="true">
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-5"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+                                </div>
+                                <h3>法规语境更贴近</h3>
+                                <p>围绕个人信息保护、数据安全、网络安全等常见场景组织检查点，输出风险原因、证据摘录和整改方向。</p>
+                            </article>
+                            <article class="advantage-item">
+                                <div class="advantage-icon" aria-hidden="true">
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h7"/><path d="M17 14l3 3-3 3"/></svg>
+                                </div>
+                                <h3>文档和代码都能查</h3>
+                                <p>隐私政策、数据处理协议、源代码、配置文件都能进入同一套上传流程，减少跨工具切换成本。</p>
+                            </article>
+                            <article class="advantage-item">
+                                <div class="advantage-icon" aria-hidden="true">
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M7 16h10"/></svg>
+                                </div>
+                                <h3>脱敏可直接交付</h3>
+                                <p>识别手机号、邮箱、身份证、地址、密钥等敏感内容，生成脱敏文件与处理报告，方便内部流转。</p>
+                            </article>
+                            <article class="advantage-item">
+                                <div class="advantage-icon" aria-hidden="true">
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7V3h8v4"/><path d="M6 21h12a2 2 0 0 0 2-2V7H4v12a2 2 0 0 0 2 2Z"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>
+                                </div>
+                                <h3>报告沉淀清楚</h3>
+                                <p>结果页保留风险项、证据、建议和下载入口，便于复核、归档，也方便团队继续追踪整改状态。</p>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section class="home-section" aria-labelledby="homeScenarioTitle">
+                        <div class="scenario-strip">
+                            <div class="scenario-panel">
+                                <p class="home-section-label">Coverage</p>
+                                <h2 class="home-section-title" id="homeScenarioTitle">上线前，先过三关。</h2>
+                                <p>不用把隐私政策、接口代码、测试数据分散给不同工具处理。一个入口完成初筛、定位、改写建议和脱敏交付。</p>
+                                <div class="scenario-metrics" aria-label="产品覆盖能力">
+                                    <div class="scenario-metric">
+                                        <strong>30+</strong>
+                                        <span>常见文件格式进入脱敏链路</span>
+                                    </div>
+                                    <div class="scenario-metric">
+                                        <strong>3</strong>
+                                        <span>文档审查、代码审查、数据脱敏</span>
+                                    </div>
+                                    <div class="scenario-metric">
+                                        <strong>1</strong>
+                                        <span>统一结果页和报告下载路径</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="scenario-list">
+                                <article class="scenario-item">
+                                    <h3>隐私政策上线前检查</h3>
+                                    <p>快速定位告知不完整、敏感信息处理、儿童个人信息、第三方共享等高频问题。</p>
+                                </article>
+                                <article class="scenario-item">
+                                    <h3>研发侧数据风险自查</h3>
+                                    <p>扫描代码里的明文密钥、敏感日志、非 HTTPS 传输和个人信息采集逻辑。</p>
+                                </article>
+                                <article class="scenario-item">
+                                    <h3>数据交付前脱敏</h3>
+                                    <p>对调研数据、表格、文档、图片或结构化数据做识别和遮盖，降低外发风险。</p>
+                                </article>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="home-section" aria-labelledby="homeWorkflowTitle">
+                        <div class="home-section-head">
+                            <div>
+                                <p class="home-section-label">Workflow</p>
+                                <h2 class="home-section-title" id="homeWorkflowTitle">上传，处理，出报告。</h2>
+                            </div>
+                        </div>
+                        <div class="workflow-rail">
+                            <article class="workflow-step">
+                                <div class="workflow-index">01</div>
+                                <h3>选择任务</h3>
+                                <p>在合规审查和数据脱敏之间切换，按场景选择文档、代码或数据处理路径。</p>
+                            </article>
+                            <article class="workflow-step">
+                                <div class="workflow-index">02</div>
+                                <h3>上传材料</h3>
+                                <p>支持文件上传，也可以直接粘贴文本，文件名会自动带入任务名称。</p>
+                            </article>
+                            <article class="workflow-step">
+                                <div class="workflow-index">03</div>
+                                <h3>实时处理</h3>
+                                <p>进度弹窗显示阶段提示和检查点，等待过程中知道系统正在做什么。</p>
+                            </article>
+                            <article class="workflow-step">
+                                <div class="workflow-index">04</div>
+                                <h3>下载归档</h3>
+                                <p>完成后进入结果页，查看风险、证据、建议，并下载 JSON 或 Markdown 报告。</p>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section class="home-section" aria-label="开源仓库">
+                        <div class="open-source-band">
+                            <div>
+                                <h2>已在 GitHub 开源。</h2>
+                                <p>代码、Web 端模板、浏览器扩展和审查 Skill 都在同一仓库维护，方便团队继续迭代、审查变更和同步部署。</p>
+                            </div>
+                            <a class="open-source-link" href="https://github.com/AiYuSherry/data-compliance-review" target="_blank" rel="noopener noreferrer">
+                                <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5A12 12 0 0 0 8.2 23.9c.6.1.8-.2.8-.6v-2.1c-3.3.7-4-1.4-4-1.4-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.4-1.3-5.4-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.6 4.6 18.6 5 18.6 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.4 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
+                                打开 GitHub
+                            </a>
+                        </div>
+                    </section>
                 </div>
             </section>
             <div class="workbench" id="workbenchPanel" style="display:none">
@@ -1873,6 +2554,58 @@
     let historyItems = [];
     const runningFromFile = window.location.protocol === 'file:';
     const localAppUrl = 'http://127.0.0.1:5055/';
+
+    function setupHomeMotion() {
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!homeBoard || reduceMotion) return;
+
+        const revealItems = Array.from(homeBoard.querySelectorAll(
+            '.home-section, .advantage-item, .scenario-panel, .scenario-item, .scenario-metric, .workflow-step, .open-source-band'
+        ));
+        document.body.classList.add('motion-ready');
+        revealItems.forEach((item, index) => {
+            item.classList.add('reveal-item');
+            item.style.setProperty('--reveal-delay', `${Math.min(index % 6, 5) * 55}ms`);
+        });
+
+        const revealObserver = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('is-visible');
+                revealObserver.unobserve(entry.target);
+            });
+        }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+        revealItems.forEach(item => revealObserver.observe(item));
+
+        const metrics = Array.from(homeBoard.querySelectorAll('.scenario-metric strong'));
+        const runCount = () => {
+            metrics.forEach(metric => {
+                const raw = metric.textContent.trim();
+                const target = parseInt(raw, 10);
+                if (!Number.isFinite(target)) return;
+                const suffix = raw.replace(String(target), '');
+                let start = null;
+                const duration = 820;
+                const tick = timestamp => {
+                    if (start === null) start = timestamp;
+                    const progress = Math.min((timestamp - start) / duration, 1);
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    metric.textContent = `${Math.round(target * eased)}${suffix}`;
+                    if (progress < 1) requestAnimationFrame(tick);
+                };
+                requestAnimationFrame(tick);
+            });
+        };
+
+        const metricsWrap = homeBoard.querySelector('.scenario-metrics');
+        if (!metricsWrap) return;
+        const metricsObserver = new IntersectionObserver(entries => {
+            if (!entries.some(entry => entry.isIntersecting)) return;
+            runCount();
+            metricsObserver.disconnect();
+        }, { threshold: 0.45 });
+        metricsObserver.observe(metricsWrap);
+    }
 
     function apiUrl(path) {
         if (runningFromFile) return new URL(path, localAppUrl).toString();
@@ -2356,6 +3089,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const initialWorkspace = urlParams.get('workspace') || 'home';
     document.body.classList.add('home-mode');
+    setupHomeMotion();
     setWorkspace(initialWorkspace);
     loadHistory();
 

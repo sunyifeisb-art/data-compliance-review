@@ -33,3 +33,5 @@ Thumbs.db
 *.log
 *.tmp
 *.bak
+.deepseek_key
+.DS_Store

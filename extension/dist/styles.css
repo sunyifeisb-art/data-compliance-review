@@ -1,22 +1,22 @@
 :root {
-  --bg: #f8fafc;
+  --bg: #faf9f6;
   --surface: #ffffff;
-  --surface-alt: #f8fafc;
-  --text: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --border: #e2e8f0;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-tint: #e0e7ff;
-  --danger: #ef4444;
+  --surface-alt: #f5f4f0;
+  --text: #161a1d;
+  --text-secondary: #66706d;
+  --text-muted: #8c9692;
+  --border: #d4d4d0;
+  --accent: #006d6a;
+  --accent-hover: #005553;
+  --accent-tint: #d7eeeb;
+  --danger: #b42318;
   --danger-bg: #fef2f2;
-  --warning: #f97316;
-  --warning-bg: #fff7ed;
-  --info: #3b82f6;
-  --info-bg: #eff6ff;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 20px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.08);
+  --warning: #b86816;
+  --warning-bg: #f6e2c8;
+  --info: #006d6a;
+  --info-bg: #d7eeeb;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
 }
 
 * {
@@ -32,8 +32,7 @@ body {
 
 h1,
 h2,
-h3,
-.brand {
+h3 {
   font-family: "Plus Jakarta Sans", "Inter", "Noto Sans SC", sans-serif;
 }
 
@@ -82,39 +81,46 @@ textarea {
   margin-bottom: 24px;
 }
 
-.brand {
-  font-size: 22px;
-  font-weight: 800;
-}
-
-.brand span {
-  color: var(--accent);
-}
-
 .ghost-button,
 .secondary-button,
 .primary-button {
-  border-radius: 12px;
-  padding: 12px 16px;
+  border-radius: 999px;
+  padding: 10px 18px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
+}
+
+.ghost-button:hover,
+.secondary-button:hover,
+.primary-button:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.10);
 }
 
 .primary-button {
-  background: var(--accent);
+  background: #111;
   color: #fff;
-  border-color: var(--accent);
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+  border-color: #111;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
 }
 
 .primary-button:hover {
-  background: var(--accent-hover);
+  background: #333;
+  border-color: #333;
 }
 
 .ghost-button {
-  padding: 10px 12px;
+  padding: 8px 14px;
+  background: transparent;
+  border-color: transparent;
+}
+.ghost-button:hover {
+  background: rgba(0,0,0,0.05);
 }
 
 .eyebrow,
