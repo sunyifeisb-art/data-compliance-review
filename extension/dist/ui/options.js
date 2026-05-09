@@ -2,7 +2,7 @@
 function normalizeSettings(raw) {
   return {
     aiEnabled: raw?.aiEnabled !== false,
-    deepseekApiKey: raw?.deepseekApiKey?.trim() || "sk-9695b956c56f4d05a583be745076cd4c",
+    deepseekApiKey: raw?.deepseekApiKey?.trim() || "",
     deepseekBaseUrl: raw?.deepseekBaseUrl?.trim() || "https://api.deepseek.com",
     deepseekModel: raw?.deepseekModel?.trim() || "deepseek-chat"
   };
