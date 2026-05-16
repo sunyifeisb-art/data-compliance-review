@@ -3,7 +3,6 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "cd data-compliance-web && gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120",
-    "healthcheckPath": "/"
+    "startCommand": "cd data-compliance-web && gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120"
   }
 }
