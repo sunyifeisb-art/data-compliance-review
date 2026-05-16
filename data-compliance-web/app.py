@@ -1386,7 +1386,7 @@ def download_desensitize_file(task_id, file_type):
 
 @app.route('/api/save-download/<task_id>/<file_type>', methods=['POST'])
 def save_download_file(task_id, file_type):
-    """桌面预览/原生壳内可靠保存：复制到下载文件夹，而不是依赖 WKWebView 附件下载。"""
+    """下载文件：直接发送文件内容给浏览器下载，不使用服务器端路径。"""
     if not ensure_task_loaded(task_id):
         return jsonify({'error': '任务不存在'}), 404
 
@@ -1410,17 +1410,12 @@ def save_download_file(task_id, file_type):
         if not source.exists():
             return jsonify({'error': '文件不存在'}), 404
 
-        downloads_dir = Path.home() / 'Downloads' / 'ComplianceAI'
-        downloads_dir.mkdir(parents=True, exist_ok=True)
-        base = safe_download_filename(task.get('document_name', 'ComplianceAI'))
-        target_ext = source.suffix or ext
-        target = downloads_dir / f'{base}_{file_type}{target_ext}'
-        counter = 1
-        while target.exists():
-            target = downloads_dir / f'{base}_{file_type}_{counter}{target_ext}'
-            counter += 1
-        shutil.copy2(source, target)
-        return jsonify({'ok': True, 'path': str(target)})
+        download_ext = source.suffix or ext
+        return send_file(
+            source,
+            as_attachment=True,
+            download_name=f'{task["document_name"]}_{file_type}{download_ext}',
+        )
 
     file_mapping = {
         'report': ('report', '.json'),
@@ -1444,16 +1439,12 @@ def save_download_file(task_id, file_type):
     if not source.exists():
         return jsonify({'error': '文件不存在'}), 404
 
-    downloads_dir = Path.home() / 'Downloads' / 'ComplianceAI'
-    downloads_dir.mkdir(parents=True, exist_ok=True)
-    base = safe_download_filename(task.get('document_name', 'ComplianceAI'))
-    target = downloads_dir / f'{base}_{file_type}{ext}'
-    counter = 1
-    while target.exists():
-        target = downloads_dir / f'{base}_{file_type}_{counter}{ext}'
-        counter += 1
-    shutil.copy2(source, target)
-    return jsonify({'ok': True, 'path': str(target)})
+    download_ext = source.suffix or ext
+    return send_file(
+        source,
+        as_attachment=True,
+        download_name=f'{task["document_name"]}_{file_type}{download_ext}',
+    )
 
 
 @app.route('/api/desensitize/save-download/<task_id>/<file_type>', methods=['POST'])
