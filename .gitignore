@@ -36,3 +36,4 @@ Thumbs.db
 .deepseek_key
 .DS_Store
 .deepseek_key
+extension/src/config.local.ts
