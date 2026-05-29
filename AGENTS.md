@@ -13,6 +13,7 @@
 ## 2. 工作流约定
 - **开发前必须确认同步**：开始改代码前，先 `git status` / `git log` 检查本地是否为 GitHub 最新版。若落后，先 `git pull` 并解决冲突后再动手。
 - 每天早上开工前 `git pull`，收工时 `git commit + push`。
+- 推送代码时必须同时推送两个 GitHub 远端：`origin`（AiYuSherry/data-compliance-review）与 `sunyi`（sunyifeisb-art/data-compliance-review）。
 - 不要通过微信传文件改代码。
 - 后端改了 JSON 格式 → 必须同步更新 `test_output/demo_data/`。
 - 前端改了页面布局 → 在 `TEAM_STATUS.md` 里 `@` 一下后端提醒检查展示效果。
