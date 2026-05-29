@@ -77,8 +77,9 @@ function renderRiskCard(item: ReviewBundle['report']['items'][number]) {
       ? `该处存在「${item.ambiguity_hits.join('、')}」等模糊表述，存在 ${item.risk_point}。`
       : `该处存在 ${item.risk_point}。`;
 
+  const lvlClass = item.risk_level === '高风险' ? 'lvl-high' : item.risk_level === '中风险' ? 'lvl-medium' : 'lvl-low';
   return `
-    <article class="risk-item">
+    <article class="risk-item ${lvlClass}">
       <div class="risk-meta-row">
         <div class="risk-meta-row">
           <span class="risk-badge badge-${item.risk_level}">${item.risk_level}</span>
@@ -225,8 +226,8 @@ function renderCompleted(job: ReviewJobRecord, bundle: ReviewBundle) {
         <p class="supporting">${escapeHtml(bundle.report.summary)}</p>
       </div>
       <div class="header-actions">
-        <button id="downloadJsonButton" class="secondary-button">下载 JSON</button>
-        <button id="downloadMarkdownButton" class="primary-button">下载 Markdown</button>
+        <button id="downloadJsonButton" class="btn-secondary">下载 JSON</button>
+        <button id="downloadMarkdownButton" class="btn-primary">下载 Markdown</button>
       </div>
     </header>
 
@@ -382,10 +383,23 @@ function renderFailure(job: ReviewJobRecord) {
       <div class="hero-card error-card">
         <p class="eyebrow">审查失败</p>
         <h1>${escapeHtml(job.documentName)}</h1>
-        <p class="supporting">${escapeHtml(job.error || job.progress.message)}</p>
+        <p class="supporting">${escapeHtml(job.error || job.progress.message || '未知错误')}</p>
+        <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button id="retryButton" class="btn-primary">重试审查</button>
+          <button id="backButton" class="btn-secondary">返回侧栏</button>
+        </div>
       </div>
     </section>
   `;
+
+  document.querySelector<HTMLButtonElement>('#retryButton')?.addEventListener('click', async () => {
+    await failJob(job.id, '');
+    await runJob(job);
+  });
+
+  document.querySelector<HTMLButtonElement>('#backButton')?.addEventListener('click', () => {
+    chrome.sidePanel.open();
+  });
 }
 
 async function runJob(job: ReviewJobRecord) {
@@ -397,6 +411,7 @@ async function runJob(job: ReviewJobRecord) {
     type: 'run-review',
     documentName: job.documentName,
     source: job.source,
+    reviewType: job.reviewType,
     settings
   });
 

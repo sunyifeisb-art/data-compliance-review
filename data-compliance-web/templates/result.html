@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>审查结果 — ComplianceAI</title>
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
     <style>
         :root {
             --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -1385,8 +1383,8 @@
             position: fixed;
             top: 0;
             right: 0;
-            width: 520px;
-            max-width: 90vw;
+            width: 760px;
+            max-width: 92vw;
             height: 100vh;
             background: var(--bg);
             border-left: 1px solid var(--border);
@@ -1480,6 +1478,84 @@
         }
         .preview-fulltext .risk-hl.active {
             background: rgba(239, 68, 68, 0.25);
+            border-bottom-color: #ef4444;
+        }
+        .preview-document {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            padding: 4px;
+        }
+        .pdf-page {
+            position: relative;
+            width: 100%;
+            background: #fff;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+        .pdf-page img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .pdf-highlight {
+            position: absolute;
+            background: rgba(245, 158, 11, 0.28);
+            border-bottom: 2px solid #f59e0b;
+            border-radius: 2px;
+            pointer-events: none;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .pdf-highlight.active {
+            background: rgba(239, 68, 68, 0.28);
+            border-bottom-color: #ef4444;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.16);
+        }
+        .word-document {
+            background: #e5e7eb;
+            padding: 18px;
+        }
+        .word-page {
+            max-width: 720px;
+            min-height: 960px;
+            margin: 0 auto;
+            padding: 56px 64px;
+            background: #fff;
+            border: 1px solid #d1d5db;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+            color: #111827;
+            font-family: "Times New Roman", "Noto Serif SC", "Songti SC", serif;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .word-page h1,
+        .word-page h2,
+        .word-page h3 {
+            margin: 18px 0 10px;
+            font-family: "Noto Serif SC", "Songti SC", serif;
+            line-height: 1.35;
+        }
+        .word-page p {
+            margin: 0 0 10px;
+        }
+        .word-page table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+            font-size: 13px;
+        }
+        .word-page td {
+            border: 1px solid #9ca3af;
+            padding: 6px 8px;
+            vertical-align: top;
+        }
+        .word-page .risk-hl {
+            background: rgba(245, 158, 11, 0.3);
+            border-bottom: 2px solid #f59e0b;
+            border-radius: 2px;
+        }
+        .word-page .risk-hl.active {
+            background: rgba(239, 68, 68, 0.26);
             border-bottom-color: #ef4444;
         }
         .preview-navbar {
@@ -1664,6 +1740,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="/static/animations.css">
 </head>
 <body>
 
@@ -1703,7 +1780,7 @@
     <div class="state-icon err">⚠️</div>
     <h2 class="state-title">审查失败</h2>
     <p class="state-sub">{{ task.error or '发生未知错误，请重新提交' }}</p>
-    <a href="/" class="btn-retry">重新审查</a>
+    <a href="/" class="btn-retry ca-btn">重新审查</a>
 </div>
 
 {% elif task.status == 'completed' and report %}
@@ -1781,7 +1858,7 @@
 		            {% endif %}
 		        </div>
         </div>
-        <button class="back-prev" type="button" onclick="location.href='/?workspace=review'">
+        <button class="back-prev ca-btn" type="button" onclick="location.href='/?workspace=review'">
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             返回上一页
         </button>
@@ -1808,19 +1885,19 @@
                     <div class="risk-tally">
                         {% if risk_stats['高风险'] > 0 %}
                         <div class="tally-item">
-                            <div class="tally-num red">{{ risk_stats['高风险'] }}</div>
+                            <div class="tally-num red ca-counter" data-counter="{{ risk_stats['高风险'] }}">{{ risk_stats['高风险'] }}</div>
                             <div class="tally-label"><span class="tally-dot" style="background:var(--red)"></span>高风险</div>
                         </div>
                         {% endif %}
                         {% if risk_stats['中风险'] > 0 %}
                         <div class="tally-item">
-                            <div class="tally-num orange">{{ risk_stats['中风险'] }}</div>
+                            <div class="tally-num orange ca-counter" data-counter="{{ risk_stats['中风险'] }}">{{ risk_stats['中风险'] }}</div>
                             <div class="tally-label"><span class="tally-dot" style="background:var(--orange)"></span>中风险</div>
                         </div>
                         {% endif %}
                         {% if risk_stats['建议优化'] > 0 %}
                         <div class="tally-item">
-                            <div class="tally-num blue">{{ risk_stats['建议优化'] }}</div>
+                            <div class="tally-num blue ca-counter" data-counter="{{ risk_stats['建议优化'] }}">{{ risk_stats['建议优化'] }}</div>
                             <div class="tally-label"><span class="tally-dot" style="background:var(--blue)"></span>建议优化</div>
                         </div>
                         {% endif %}
@@ -1919,7 +1996,7 @@
                         </div>
                     </div>
                     {% if item.source_sections %}
-                    <button class="locate-btn" data-locate-index="{{ loop.index }}" data-locate-risk="{{ item.risk_point|e }}" data-locate-snippet="{{ item.source_sections[0].snippet|e }}" data-locate-page="{{ item.source_sections[0].page }}" data-locate-segment="{{ item.source_sections[0].segment_index }}">
+                    <button class="locate-btn" data-locate-id="risk-{{ loop.index }}" data-locate-index="{{ loop.index }}" data-locate-risk="{{ item.risk_point|e }}" data-locate-snippet="{{ item.source_sections[0].snippet|e }}" data-locate-page="{{ item.source_sections[0].page }}" data-locate-segment="{{ item.source_sections[0].segment_index }}">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="22" y1="12" x2="18" y2="12"></line><line x1="6" y1="12" x2="2" y2="12"></line><line x1="12" y1="6" x2="12" y2="2"></line><line x1="12" y1="22" x2="12" y2="18"></line></svg>
                         定位原文
                     </button>
@@ -2386,6 +2463,9 @@
             this.navbar = document.getElementById('previewNavbar');
             this.fullText = document.getElementById('previewFullText');
             this.body = document.getElementById('previewBody');
+            this.infoBar = document.getElementById('previewInfoBar');
+            this.locationInfo = document.getElementById('previewLocationInfo');
+            this.pageIndicator = document.getElementById('previewPageIndicator');
             this.prevBtn = document.getElementById('prevRiskBtn');
             this.nextBtn = document.getElementById('nextRiskBtn');
             this.riskCounter = document.getElementById('riskCounter');
@@ -2424,21 +2504,26 @@
                 if (!btn) return;
                 e.preventDefault();
                 e.stopPropagation();
-                const riskPoint = btn.dataset.locateRisk || '';
-                this.openToRisk(riskPoint);
+                this.openToRisk({
+                    id: btn.dataset.locateId || '',
+                    riskPoint: btn.dataset.locateRisk || '',
+                    snippet: btn.dataset.locateSnippet || ''
+                });
             });
 
             this.prevBtn?.addEventListener('click', () => this.navigateRisk(-1));
             this.nextBtn?.addEventListener('click', () => this.navigateRisk(1));
         }
 
-        async openToRisk(riskPoint) {
+        async openToRisk(target) {
             this.openSidebar();
             if (!this.taskId) return;
             if (!this._loaded) {
                 await this.loadFullText();
             }
-            const idx = this.risks.findIndex(r => r.risk_point === riskPoint);
+            let idx = this.risks.findIndex(r => r.risk_id === target.id);
+            if (idx < 0) idx = this.risks.findIndex(r => r.snippet === target.snippet);
+            if (idx < 0) idx = this.risks.findIndex(r => r.risk_point === target.riskPoint);
             if (idx >= 0) {
                 this.currentRiskIndex = idx;
                 this.updateHighlight();
@@ -2449,6 +2534,7 @@
             this.emptyState.style.display = 'none';
             this.fullText.style.display = 'none';
             this.navbar.style.display = 'none';
+            this.infoBar.style.display = 'none';
 
             const loadingEl = document.createElement('div');
             loadingEl.className = 'preview-loading';
@@ -2456,7 +2542,7 @@
             this.body.appendChild(loadingEl);
 
             try {
-                const res = await fetch(apiUrl('/api/task/' + this.taskId + '/preview-full'));
+                const res = await fetch(apiUrl('/api/task/' + this.taskId + '/preview-document'));
                 if (!res.ok) {
                     loadingEl.textContent = '无法加载原文';
                     return;
@@ -2468,9 +2554,18 @@
                 }
 
                 this.risks = data.risks || [];
+                this.mode = data.mode || 'text';
                 this._loaded = true;
+                this.filenameEl.textContent = data.filename || '文件预览';
+                this.pageCount = data.page_count || null;
                 loadingEl.remove();
-                this.renderText(data.full_text || '');
+                if (this.mode === 'pdf') {
+                    this.renderPdf(data);
+                } else if (this.mode === 'word') {
+                    this.renderWord(data);
+                } else {
+                    this.renderText(data.full_text || '');
+                }
 
             } catch (err) {
                 console.error('Preview error:', err);
@@ -2478,24 +2573,69 @@
             }
         }
 
+        showChrome() {
+            this.fullText.style.display = 'block';
+            this.navbar.style.display = 'flex';
+            this.infoBar.style.display = 'flex';
+            this.totalBadge.textContent = this.risks.length + ' \u9879\u98ce\u9669';
+            this.updateHighlight();
+        }
+
+        renderPdf(data) {
+            const risksByPage = new Map();
+            for (const risk of this.risks) {
+                for (const hl of risk.highlights || []) {
+                    const page = String(hl.page);
+                    if (!risksByPage.has(page)) risksByPage.set(page, []);
+                    risksByPage.get(page).push({ risk, hl });
+                }
+            }
+            this.fullText.className = 'preview-document pdf-document';
+            this.fullText.innerHTML = (data.pages || []).map(page => {
+                const pageHighlights = risksByPage.get(String(page.page)) || [];
+                const overlays = pageHighlights.map(({ risk, hl }) => {
+                    return '<span class="pdf-highlight" data-risk-ids="' + this.escapeHtml(risk.risk_id) + '" title="' + this.escapeHtml(risk.risk_point) + '" style="left:' + hl.x + '%;top:' + hl.y + '%;width:' + hl.w + '%;height:' + hl.h + '%"></span>';
+                }).join('');
+                return '<section class="pdf-page" data-page="' + page.page + '" style="aspect-ratio:' + page.width + '/' + page.height + '">' +
+                    '<img loading="lazy" src="' + this.escapeHtml(page.image_url) + '" alt="第 ' + page.page + ' 页">' +
+                    overlays +
+                '</section>';
+            }).join('');
+            this.showChrome();
+        }
+
+        renderWord(data) {
+            this.fullText.className = 'preview-document word-document';
+            this.fullText.innerHTML = data.html || '<article class="word-page"></article>';
+            for (const risk of this.risks) {
+                this.highlightWordRisk(risk);
+            }
+            this.showChrome();
+        }
+
         renderText(fullText) {
             if (!fullText) {
+                this.fullText.className = 'preview-fulltext';
                 this.fullText.textContent = '(原文为空)';
                 this.fullText.style.display = 'block';
                 return;
             }
+            this.fullText.className = 'preview-fulltext';
 
-            // Build segments: split by risk positions to avoid HTML-escaping offset issues
-            const sorted = [...this.risks].filter(r => r.start >= 0 && r.end > r.start);
+            // Build segments: split by risk positions to avoid HTML-escaping offset issues.
+            const sorted = [...this.risks].filter(r => Number.isFinite(r.start) && Number.isFinite(r.end) && r.start >= 0 && r.end > r.start);
             sorted.sort((a, b) => a.start - b.start);
 
             // Merge overlapping risk ranges
             const merged = [];
             for (const r of sorted) {
                 if (merged.length > 0 && r.start <= merged[merged.length - 1].end) {
-                    merged[merged.length - 1].end = Math.max(merged[merged.length - 1].end, r.end);
+                    const last = merged[merged.length - 1];
+                    last.end = Math.max(last.end, r.end);
+                    last.riskIds.push(r.risk_id);
+                    last.riskLabels.push(r.risk_point);
                 } else {
-                    merged.push({ start: r.start, end: r.end, risk: r.risk_point });
+                    merged.push({ start: r.start, end: r.end, riskIds: [r.risk_id], riskLabels: [r.risk_point] });
                 }
             }
 
@@ -2506,7 +2646,7 @@
                 if (seg.start > cursor) {
                     parts.push({ text: fullText.slice(cursor, seg.start), hl: false });
                 }
-                parts.push({ text: fullText.slice(seg.start, seg.end), hl: true, risk: seg.risk });
+                parts.push({ text: fullText.slice(seg.start, seg.end), hl: true, riskIds: seg.riskIds, riskLabels: seg.riskLabels });
                 cursor = seg.end;
             }
             if (cursor < fullText.length) {
@@ -2518,21 +2658,78 @@
             for (const part of parts) {
                 const escaped = this.escapeHtml(part.text);
                 if (part.hl) {
-                    html += '<span class="risk-hl" data-risk="' + this.escapeHtml(part.risk) + '" title="' + this.escapeHtml(part.risk) + '">' + escaped + '</span>';
+                    html += '<span class="risk-hl" data-risk-ids="' + this.escapeHtml(part.riskIds.join(',')) + '" title="' + this.escapeHtml([...new Set(part.riskLabels)].join(' / ')) + '">' + escaped + '</span>';
                 } else {
                     html += escaped;
                 }
             }
 
             this.fullText.innerHTML = html;
-            this.fullText.style.display = 'block';
-            this.navbar.style.display = 'flex';
-            this.totalBadge.textContent = this.risks.length + ' \u9879\u98ce\u9669';
-            this.updateHighlight();
+            this.showChrome();
+        }
+
+        highlightWordRisk(risk) {
+            const root = this.fullText.querySelector('.word-page') || this.fullText;
+            let matched = false;
+            const sections = risk.sections?.length ? risk.sections : [{ snippet: risk.snippet || '' }];
+            for (const section of sections) {
+                for (const phrase of this.searchPhrases(section.snippet || '')) {
+                    matched = this.wrapFirstPhrase(root, phrase, risk) || matched;
+                }
+            }
+            return matched;
+        }
+
+        searchPhrases(snippet) {
+            const cleaned = String(snippet || '').replace(/\s+/g, ' ').trim();
+            const phrases = [];
+            if (cleaned.length >= 12) phrases.push(cleaned.slice(0, 80));
+            cleaned.split(/[。；;.!?？]/).forEach(part => {
+                const p = part.trim();
+                if (p.length < 8) return;
+                if (p.length <= 80) {
+                    phrases.push(p);
+                    return;
+                }
+                p.split(/[，,、]/).forEach(clause => {
+                    const c = clause.trim();
+                    if (c.length >= 8) phrases.push(c.slice(0, 80));
+                });
+                for (let start = 0; start < p.length; start += 60) {
+                    const chunk = p.slice(start, start + 80).trim();
+                    if (chunk.length >= 12) phrases.push(chunk);
+                }
+            });
+            return [...new Set(phrases)].filter(Boolean);
+        }
+
+        wrapFirstPhrase(root, phrase, risk) {
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+                acceptNode(node) {
+                    if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+                    if (node.parentElement?.closest('.risk-hl')) return NodeFilter.FILTER_REJECT;
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            });
+            let node;
+            while ((node = walker.nextNode())) {
+                const idx = node.nodeValue.indexOf(phrase);
+                if (idx < 0) continue;
+                const after = node.splitText(idx);
+                const tail = after.splitText(phrase.length);
+                const mark = document.createElement('mark');
+                mark.className = 'risk-hl';
+                mark.dataset.riskIds = risk.risk_id;
+                mark.title = risk.risk_point || '';
+                mark.textContent = after.nodeValue;
+                after.parentNode.replaceChild(mark, after);
+                return true;
+            }
+            return false;
         }
 
         updateHighlight() {
-            this.fullText.querySelectorAll('.risk-hl.active').forEach(function(el) { el.classList.remove('active'); });
+            this.fullText.querySelectorAll('.risk-hl.active, .pdf-highlight.active').forEach(function(el) { el.classList.remove('active'); });
 
             if (this.currentRiskIndex < 0 || this.currentRiskIndex >= this.risks.length) {
                 this.riskCounter.textContent = '';
@@ -2545,15 +2742,44 @@
             this.riskCounter.textContent = (this.currentRiskIndex + 1) + ' / ' + this.risks.length;
             this.prevBtn.disabled = this.currentRiskIndex <= 0;
             this.nextBtn.disabled = this.currentRiskIndex >= this.risks.length - 1;
+            const locationParts = [];
+            if (risk.label) locationParts.push(risk.label);
+            if (risk.segment_index) locationParts.push('第 ' + risk.segment_index + ' 段');
+            this.locationInfo.textContent = locationParts.join(' · ') || risk.risk_point || '原文定位';
+            if (risk.page) {
+                this.pageIndicator.textContent = this.pageCount ? ('第 ' + risk.page + ' / ' + this.pageCount + ' 页') : ('第 ' + risk.page + ' 页');
+            } else {
+                this.pageIndicator.textContent = '';
+            }
 
             const spans = this.fullText.querySelectorAll('.risk-hl');
+            let firstMatch = null;
             for (const span of spans) {
-                if (span.dataset.risk === risk.risk_point) {
+                const ids = (span.dataset.riskIds || '').split(',');
+                if (ids.includes(risk.risk_id)) {
                     span.classList.add('active');
-                    span.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    break;
+                    firstMatch = firstMatch || span;
                 }
             }
+            if (firstMatch) {
+                firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            const pdfHighlights = this.fullText.querySelectorAll('.pdf-highlight');
+            firstMatch = null;
+            for (const span of pdfHighlights) {
+                const ids = (span.dataset.riskIds || '').split(',');
+                if (ids.includes(risk.risk_id)) {
+                    span.classList.add('active');
+                    firstMatch = firstMatch || span;
+                }
+            }
+            if (firstMatch) {
+                firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+            const page = this.fullText.querySelector('.pdf-page[data-page="' + risk.page + '"]');
+            if (page) page.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         navigateRisk(direction) {
@@ -2565,11 +2791,13 @@
 
         openSidebar() {
             this.sidebar.classList.add('open');
+            this.backdrop.classList.add('open');
             document.body.style.overflow = 'hidden';
         }
 
         close() {
             this.sidebar.classList.remove('open');
+            this.backdrop.classList.remove('open');
             document.body.style.overflow = '';
         }
 
@@ -2582,5 +2810,6 @@
 
     const preview = new FullTextPreview();
 </script>
+<script src="/static/animations.js"></script>
 </body>
 </html>

@@ -1,11 +1,11 @@
-import { DEEPSEEK_API_KEY } from '../config.local';import type { ExtensionSettings } from '../shared/types';
+import type { ExtensionSettings } from '../shared/types';
 
 export function normalizeSettings(
   raw: Partial<ExtensionSettings> | null | undefined
 ): ExtensionSettings {
   return {
-    aiEnabled: raw?.aiEnabled !== false,
-    deepseekApiKey: raw?.deepseekApiKey?.trim() || (typeof DEEPSEEK_API_KEY !== 'undefined' ? DEEPSEEK_API_KEY : ''),
+    aiEnabled: raw?.aiEnabled ?? false,
+    deepseekApiKey: raw?.deepseekApiKey?.trim() || '',
     deepseekBaseUrl: raw?.deepseekBaseUrl?.trim() || 'https://api.deepseek.com',
     deepseekModel: raw?.deepseekModel?.trim() || 'deepseek-chat'
   };

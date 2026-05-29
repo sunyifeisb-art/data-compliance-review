@@ -1,11 +1,8 @@
-// src/config.local.ts
-var DEEPSEEK_API_KEY = "sk-9695b956c56f4d05a583be745076cd4c";
-
 // src/storage/settings.ts
 function normalizeSettings(raw) {
   return {
-    aiEnabled: raw?.aiEnabled !== false,
-    deepseekApiKey: raw?.deepseekApiKey?.trim() || (typeof DEEPSEEK_API_KEY !== "undefined" ? DEEPSEEK_API_KEY : ""),
+    aiEnabled: raw?.aiEnabled ?? false,
+    deepseekApiKey: raw?.deepseekApiKey?.trim() || "",
     deepseekBaseUrl: raw?.deepseekBaseUrl?.trim() || "https://api.deepseek.com",
     deepseekModel: raw?.deepseekModel?.trim() || "deepseek-chat"
   };

@@ -10,6 +10,10 @@ import sys
 from pathlib import Path
 
 from docx import Document
+from docx.table import Table
+from docx.text.paragraph import Paragraph
+from docx.oxml.table import CT_Tbl
+from docx.oxml.text.paragraph import CT_P
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -48,7 +52,7 @@ def read_pdf_text(path: Path) -> str:
         try:
             with path.open('rb') as handle:
                 reader = PdfReader(handle)
-                text = '\n\n'.join((page.extract_text() or '') for page in reader.pages).strip()
+                text = '\f'.join((page.extract_text() or '') for page in reader.pages).strip()
         except Exception:
             text = ''
 
@@ -88,8 +92,7 @@ def read_office_text(path: Path) -> str:
     if path.suffix.lower() == '.docx':
         try:
             document = Document(str(path))
-            parts = [paragraph.text for paragraph in document.paragraphs if paragraph.text.strip()]
-            text = '\n\n'.join(parts).strip()
+            text = '\n\n'.join(iter_docx_text(document)).strip()
         except Exception as exc:
             text = ''
         if text:
@@ -117,6 +120,53 @@ def read_office_text(path: Path) -> str:
     if not text:
         raise SystemExit('无法从文档中提取文本，请确认文件内容有效')
     return text
+
+
+def iter_docx_blocks(parent) -> list[Paragraph | Table]:
+    container = parent.element.body if hasattr(parent, 'element') and hasattr(parent.element, 'body') else parent._tc
+    blocks: list[Paragraph | Table] = []
+    for child in container.iterchildren():
+        if isinstance(child, CT_P):
+            blocks.append(Paragraph(child, parent))
+        elif isinstance(child, CT_Tbl):
+            blocks.append(Table(child, parent))
+    return blocks
+
+
+def iter_table_text(table: Table) -> list[str]:
+    parts: list[str] = []
+    for row in table.rows:
+        cells = []
+        for cell in row.cells:
+            cell_parts = list(iter_docx_text(cell))
+            if cell_parts:
+                cells.append(' / '.join(cell_parts))
+        if cells:
+            parts.append(' | '.join(cells))
+    return parts
+
+
+def iter_docx_text(container) -> list[str]:
+    parts: list[str] = []
+    for block in iter_docx_blocks(container):
+        if isinstance(block, Paragraph):
+            text = block.text.strip()
+            if text:
+                parts.append(text)
+        elif isinstance(block, Table):
+            parts.extend(iter_table_text(block))
+
+    if hasattr(container, 'sections'):
+        for section in container.sections:
+            for area in (section.header, section.footer):
+                for paragraph in area.paragraphs:
+                    text = paragraph.text.strip()
+                    if text:
+                        parts.append(text)
+                for table in area.tables:
+                    parts.extend(iter_table_text(table))
+
+    return parts
 
 
 def normalize(raw: str) -> str:

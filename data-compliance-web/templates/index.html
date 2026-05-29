@@ -2163,6 +2163,7 @@ body.dark.raven-layout .home-headline .char:hover { color: #5ee4e0; }
             }
         }
     </style>
+    <link rel="stylesheet" href="/static/animations.css">
 </head>
 <body class="raven-layout home-mode">
     <header>
@@ -2467,7 +2468,7 @@ body.dark.raven-layout .home-headline .char:hover { color: #5ee4e0; }
                                 <h3 id="uploadTitle" class="mode-copy">上传文件开始审查</h3>
                                 <p id="supportText" class="mode-copy">支持 PDF、Word、TXT、扫描 PDF、图片</p>
                                 <p id="formatDetail" class="format-detail"></p>
-                                <button class="btn-primary" id="selectFileBtn">选择文件</button>
+                                <button class="btn-primary ca-btn" id="selectFileBtn">选择文件</button>
                             </div>
                             <input type="file" id="fileInput" style="display:none" accept=".txt,.md,.markdown,.log,.rtf,.html,.htm,.xml,.yaml,.yml,.toml,.ini,.cfg,.conf,.env,.doc,.docx,.pdf,.pptx,.csv,.tsv,.xlsx,.xls,.ods,.json,.jsonl,.ndjson,.png,.jpg,.jpeg,.webp,.bmp,.tif,.tiff,.py,.js,.jsx,.ts,.tsx,.java,.go,.php,.rb,.swift,.kt,.c,.cc,.cpp,.h,.hpp,.cs,.rs,.sh,.sql,.css">
                         </div>
@@ -2481,13 +2482,13 @@ body.dark.raven-layout .home-headline .char:hover { color: #5ee4e0; }
                                         <p id="fileSize" class="file-size"></p>
                                     </div>
                                 </div>
-                                <button id="removeFile" class="file-remove">x</button>
+                                <button id="removeFile" class="file-remove ca-btn">x</button>
                             </div>
                         </div>
 
                         <div class="or-divider">或</div>
                         <textarea id="textInput" class="text-input-area" rows="4" placeholder="直接粘贴隐私政策或数据处理协议全文..."></textarea>
-                        <button id="startBtn" class="btn-primary" style="width:100%; margin-top:16px;">开始审查</button>
+                        <button id="startBtn" class="btn-primary ca-btn" style="width:100%; margin-top:16px;">开始审查</button>
                     </div>
             </div>
         </main>
@@ -2514,7 +2515,7 @@ body.dark.raven-layout .home-headline .char:hover { color: #5ee4e0; }
             <div class="error-icon" aria-hidden="true"></div>
             <p class="modal-label" style="color:var(--red)">提交失败</p>
             <p id="errorMessage" class="modal-message" style="color:var(--ink);margin-bottom:0"></p>
-            <button id="closeError" class="btn-close">关闭</button>
+            <button id="closeError" class="btn-close ca-btn">关闭</button>
         </div>
     </div>
 
@@ -3107,5 +3108,6 @@ body.dark.raven-layout .home-headline .char:hover { color: #5ee4e0; }
         });
     });
     </script>
+<script src="/static/animations.js"></script>
 </body>
 </html>

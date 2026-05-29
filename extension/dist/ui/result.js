@@ -1,11 +1,8 @@
-// src/config.local.ts
-var DEEPSEEK_API_KEY = "sk-9695b956c56f4d05a583be745076cd4c";
-
 // src/storage/settings.ts
 function normalizeSettings(raw) {
   return {
-    aiEnabled: raw?.aiEnabled !== false,
-    deepseekApiKey: raw?.deepseekApiKey?.trim() || (typeof DEEPSEEK_API_KEY !== "undefined" ? DEEPSEEK_API_KEY : ""),
+    aiEnabled: raw?.aiEnabled ?? false,
+    deepseekApiKey: raw?.deepseekApiKey?.trim() || "",
     deepseekBaseUrl: raw?.deepseekBaseUrl?.trim() || "https://api.deepseek.com",
     deepseekModel: raw?.deepseekModel?.trim() || "deepseek-chat"
   };
@@ -369,8 +366,9 @@ function renderRegulationCards(regulations) {
 }
 function renderRiskCard(item) {
   const summaryReason = item.missing_groups?.length ? `\u8BE5\u5904\u672A\u660E\u786E ${item.missing_groups.join("\u3001")}\uFF0C\u5B58\u5728 ${item.risk_point}\u3002` : item.ambiguity_hits?.length ? `\u8BE5\u5904\u5B58\u5728\u300C${item.ambiguity_hits.join("\u3001")}\u300D\u7B49\u6A21\u7CCA\u8868\u8FF0\uFF0C\u5B58\u5728 ${item.risk_point}\u3002` : `\u8BE5\u5904\u5B58\u5728 ${item.risk_point}\u3002`;
+  const lvlClass = item.risk_level === "\u9AD8\u98CE\u9669" ? "lvl-high" : item.risk_level === "\u4E2D\u98CE\u9669" ? "lvl-medium" : "lvl-low";
   return `
-    <article class="risk-item">
+    <article class="risk-item ${lvlClass}">
       <div class="risk-meta-row">
         <div class="risk-meta-row">
           <span class="risk-badge badge-${item.risk_level}">${item.risk_level}</span>
@@ -475,8 +473,8 @@ function renderCompleted(job, bundle) {
         <p class="supporting">${escapeHtml(bundle.report.summary)}</p>
       </div>
       <div class="header-actions">
-        <button id="downloadJsonButton" class="secondary-button">\u4E0B\u8F7D JSON</button>
-        <button id="downloadMarkdownButton" class="primary-button">\u4E0B\u8F7D Markdown</button>
+        <button id="downloadJsonButton" class="btn-secondary">\u4E0B\u8F7D JSON</button>
+        <button id="downloadMarkdownButton" class="btn-primary">\u4E0B\u8F7D Markdown</button>
       </div>
     </header>
 
@@ -600,10 +598,21 @@ function renderFailure(job) {
       <div class="hero-card error-card">
         <p class="eyebrow">\u5BA1\u67E5\u5931\u8D25</p>
         <h1>${escapeHtml(job.documentName)}</h1>
-        <p class="supporting">${escapeHtml(job.error || job.progress.message)}</p>
+        <p class="supporting">${escapeHtml(job.error || job.progress.message || "\u672A\u77E5\u9519\u8BEF")}</p>
+        <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button id="retryButton" class="btn-primary">\u91CD\u8BD5\u5BA1\u67E5</button>
+          <button id="backButton" class="btn-secondary">\u8FD4\u56DE\u4FA7\u680F</button>
+        </div>
       </div>
     </section>
   `;
+  document.querySelector("#retryButton")?.addEventListener("click", async () => {
+    await failJob(job.id, "");
+    await runJob(job);
+  });
+  document.querySelector("#backButton")?.addEventListener("click", () => {
+    chrome.sidePanel.open();
+  });
 }
 async function runJob(job) {
   const settings = await loadSettings();
@@ -614,6 +623,7 @@ async function runJob(job) {
     type: "run-review",
     documentName: job.documentName,
     source: job.source,
+    reviewType: job.reviewType,
     settings
   });
   worker.onmessage = async (event) => {

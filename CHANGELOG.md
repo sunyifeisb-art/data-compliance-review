@@ -4,6 +4,14 @@
 
 ---
 
+[2026-05-29 22:14] — 你 — 修复原文定位预览并更新发布包
+
+- 结果页“定位原文”改为文件级预览：PDF 以原始 PDF 页面渲染，Word 以文档页样式渲染，不再只展示截断摘录或高亮片段。
+- PDF 定位改为按引用段锚定并在对应页面局部连续高亮，避免同类短语在全文其他位置误高亮。
+- Word 定位支持在文档正文内自动高亮多个引用片段，保留完整文档上下文。
+- 扩展端同步构建最新审查结果页与任务存储逻辑，发布包将同步刷新 GitHub Release 资产。
+- **文件改动**：`data-compliance-web/app.py`、`data-compliance-web/templates/result.html`、`data-compliance-web/scripts/preprocess_input.py`、`extension/`、`TEAM_STATUS.md`
+
 [2026-05-09 21:58] — 你 — 封装数律通 macOS 原生应用
 
 - 更新 macOS App 打包脚本：支持直接使用 PNG/JPG/SVG 图标源，并将图标等比居中封装为 macOS 圆角正方形 `.icns`。

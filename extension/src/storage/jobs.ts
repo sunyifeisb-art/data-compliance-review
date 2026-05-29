@@ -18,12 +18,14 @@ export async function createReviewJob(input: {
   id?: string;
   documentName: string;
   source: ReviewSourceInput;
+  reviewType?: 'document' | 'code';
 }): Promise<ReviewJobRecord> {
   const now = new Date().toISOString();
   const job: ReviewJobRecord = {
     id: input.id ?? createJobId(),
     documentName: input.documentName,
     source: input.source,
+    reviewType: input.reviewType ?? 'document',
     status: 'pending',
     createdAt: now,
     updatedAt: now,

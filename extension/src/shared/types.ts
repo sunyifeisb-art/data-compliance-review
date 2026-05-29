@@ -23,6 +23,7 @@ export interface ReviewJobRecord {
   id: string;
   documentName: string;
   source: ReviewSourceInput;
+  reviewType: 'document' | 'code';
   status: 'pending' | 'running' | 'completed' | 'failed';
   createdAt: string;
   updatedAt: string;
